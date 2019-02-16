@@ -291,7 +291,7 @@ void signal_handler(int signo) {
         do {
             thread_pool.push(thread_pool.front());
             thread_pool.pop();
-        } while (thread_pool.front() == 2);
+        } while (thread_pool.front() == BLOCKED);
 
 		/* resume scheduler and GOOOOOOOOOO */
         thread_pool.front().staus = RUNNING;
@@ -427,22 +427,38 @@ int sem_destroy(sem_t *sem) {
 
 //TODO: do stuff with wait_q
 int sem_wait(sem_t *sem) {
+	lock();
     if (sem->__align->value > 0) {
         sem->__align->value--;
         return 1;
     }
     else {
-        thread_pool.front().status = BLOCKED;
-        while (!sem->__align->lock_stream.test_and_set());
-        sem->align->value -=1;
-    }
+		thread_pool.front().status = BLOCKED;
+		sem->__align->wait_q.push(thread_pool.front());
+		unlock();
+		while (!sem->__align->lock_stream.test_and_set());
+		sem->align->value--;
+		return 1;
+	}
+
 }
 
-int sem_pos(sem_t *sem) {
+int sem_post(sem_t *sem) {
+	lock();
     sem->__align->value++;
     if (sem->__align->value == 1) {
-        thread_pool.front().status = RUNNING;
+		//pop thread from front of wait q and set its status to ready
+		tcb_t temp = sem->__align->wait_q.front();
+		sem->__align->wait_q.pop();
+        temp.status = READY;
+		//clear the semaphores lock stream
         sem->__align->lock_stream.clear();
+		sem->align->value--;
+		//context switch --> Hoare semantics
+		unlock();
+		pause();
+
+
     }
 }
 
