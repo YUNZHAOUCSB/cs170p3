@@ -372,6 +372,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 
     //how to check if pthread_t thread is still running?
 
+	//TODO: use semaphores or test&set operation
     /*
     while(thread.pool.front().return_value == NULL) {
         thread_pool.front().status = BLOCKED;
