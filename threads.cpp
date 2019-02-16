@@ -16,6 +16,8 @@
 #include <time.h>
 #include <string.h>
 #include <queue>
+#include <semaphore.h>
+#include <atomic>
 
 
 
@@ -26,6 +28,12 @@
 void signal_handler(int signo);
 void the_nowhere_zone(void);
 static int ptr_mangle(int p);
+
+//sync functions
+void lock();
+void unlock();
+void pthread_exit_wrapper();
+
 
 
 /* 
@@ -49,6 +57,26 @@ static struct sigaction act;
 #define INTERVAL 50
 
 
+//thread statuses
+#define RUNNING 0
+#define READY 1
+#define BLOCKED 2
+#define EXITED 3
+
+//max value for semaphores
+#define SEM_VALUE_MAX 65536
+
+/*
+ * Semaphore struct definition
+ */
+typedef struct {
+    int value;
+    std::queue<tcb_t> *wait_q;
+    bool init = false;
+    std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
+} semaphore;
+
+
 /*
  * Thread Control Block definition 
  */
@@ -60,8 +88,12 @@ typedef struct {
 	jmp_buf jb;
 	/* stack pointer for thread; for main thread, this will be NULL */	
 	char *stack;
-} tcb_t;
 
+    //for thread synchronization
+    int status;
+    int return_value;
+
+} tcb_t;
 
 
 /* 
@@ -170,7 +202,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	tmp_tcb.stack = (char *) malloc (32767);
 
 	*(int*)(tmp_tcb.stack+32763) = (int)restrict_arg;
-	*(int*)(tmp_tcb.stack+32759) = (int)pthread_exit;
+	*(int*)(tmp_tcb.stack+32759) = (int)pthread_exit_wrapper;
 	
 	/* initialize jump buf structure to be 0, just in case there's garbage */
 	memset(&tmp_tcb.jb,0,sizeof(tmp_tcb.jb));
@@ -181,6 +213,9 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	   jmp buffer. don't forget to mangle! */
 	tmp_tcb.jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(tmp_tcb.stack+32759));
 	tmp_tcb.jb->__jmpbuf[5] = ptr_mangle((uintptr_t)start_routine);
+
+    // set status to ready
+    tmp_tcb.status = READY;
 
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
@@ -218,30 +253,19 @@ pthread_t pthread_self(void) {
  */
 void pthread_exit(void *value_ptr) {
 
+    //Does this collect pointer right?
+    thread_pool.front().status = EXITED;
+    thread_pool.front().return_value = value_ptr;
+
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
 	}
 
-	/* stop the timer so we don't get interrupted */
-	STOP_TIMER;
+    //don't clean up everything, do it in pthread_join()
 
-	if(thread_pool.front().id == 0) {
-		/* if its the main thread, still keep a reference to it
-	       we'll longjmp here when all other threads are done */
-		main_tcb = thread_pool.front();
-		if(setjmp(main_tcb.jb)) {
-			/* garbage collector's stack should be freed by OS upon exit;
-			   We'll free anyways, for completeness */
-			free((void*) garbage_collector.stack);
-			exit(0);
-		} 
-	}
 
-	/* Jump to garbage collector stack frame to free memory and scheduler another thread.
-	   Since we're currently "living" on this thread's stack frame, deleting it while we're
-	   on it would be undefined behavior */
-	longjmp(garbage_collector.jb,1); 
+    //though, if all threads have exited, clean all of them up
 }
 
 
@@ -262,9 +286,15 @@ void signal_handler(int signo) {
 	   non-zero value. */
 	if(setjmp(thread_pool.front().jb) == 0) {
 		/* switch threads */
-		thread_pool.push(thread_pool.front());
-		thread_pool.pop();
+        thread_pool.front().status = READY;
+        //if thread is blocked then find next thread that isn't blocked
+        do {
+            thread_pool.push(thread_pool.front());
+            thread_pool.pop();
+        } while (thread_pool.front() == 2);
+
 		/* resume scheduler and GOOOOOOOOOO */
+        thread_pool.front().staus = RUNNING;
 		longjmp(thread_pool.front().jb,1);
 	}
 
@@ -317,4 +347,103 @@ int ptr_mangle(int p)
     );
     return ret;
 }
+
+/*
+ * SYNCHRONIZATION FUNCTIONS
+ */
+
+// lock and unlock functions
+void lock() {
+    sigprocmask(SIG_BLOCK, &act.sa_mask, NULL);
+}
+
+void unlock() {
+    sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
+}
+
+void pthread_exit_wrapper (){
+    unsigned  int res;
+    asm("movl %%eax ,  %0\n":"=r "(res));
+    pthreadexit ((void *)  res) ;
+}
+
+int pthread_join(pthread_t thread, void **value_ptr) {
+    //calling thread is thread on front
+
+    //how to check if pthread_t thread is still running?
+
+    /*
+    while(thread.pool.front().return_value == NULL) {
+        thread_pool.front().status = BLOCKED;
+    }
+     */
+
+    //set value_ptr to threads return_value
+
+    //Free the thread now that we have used its return value
+
+    /* stop the timer so we don't get interrupted */
+    STOP_TIMER;
+
+    if(thread_pool.front().id == 0) {
+        /* if its the main thread, still keep a reference to it
+           we'll longjmp here when all other threads are done */
+        main_tcb = thread_pool.front();
+        if(setjmp(main_tcb.jb)) {
+            /* garbage collector's stack should be freed by OS upon exit;
+               We'll free anyways, for completeness */
+            free((void*) garbage_collector.stack);
+            exit(0);
+        }
+    }
+
+    /* Jump to garbage collector stack frame to free memory and scheduler another thread.
+       Since we're currently "living" on this thread's stack frame, deleting it while we're
+       on it would be undefined behavior */
+    longjmp(garbage_collector.jb,1);
+}
+
+int sem_init(sem_t *sem, int pshared, unsigned value) {
+    semaphore *temp;
+    temp->value = value;
+    temp->init = true;
+    sem->__align = temp;
+}
+
+int sem_destroy(sem_t *sem) {
+    if (sem->__align->init) {
+        free(sem->__align->init->wait_q);
+        free(sem->__align->init);
+        free(*sem);
+        return 1; // 1 is successful
+    }
+    else {
+        //undefined behavior
+        return -1;// -1 is unsuccessful
+    }
+}
+
+
+//TODO: do stuff with wait_q
+int sem_wait(sem_t *sem) {
+    if (sem->__align->value > 0) {
+        sem->__align->value--;
+        return 1;
+    }
+    else {
+        thread_pool.front().status = BLOCKED;
+        while (!sem->__align->lock_stream.test_and_set());
+        sem->align->value -=1;
+    }
+}
+
+int sem_pos(sem_t *sem) {
+    sem->__align->value++;
+    if (sem->__align->value == 1) {
+        thread_pool.front().status = RUNNING;
+        sem->__align->lock_stream.clear();
+    }
+}
+
+
 
