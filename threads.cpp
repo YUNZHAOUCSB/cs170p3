@@ -68,16 +68,6 @@ static struct sigaction act;
 #define MAX_THREADS 128
 
 /*
- * Semaphore struct definition
- */
-typedef struct {
-    int value;
-    std::queue<tcb_t*> wait_q;
-    bool init = false;
-    std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
-} semaphore;
-
-/*
  * Thread Control Block definition 
  */
 typedef struct {
@@ -93,10 +83,20 @@ typedef struct {
     //for thread synchronization
     int status;
     void *return_value;
-    sem_t sem_synch;
+    sem_t *sem_synch;
 	//end change
 
 } tcb_t;
+
+/*
+ * Semaphore struct definition
+ */
+typedef struct {
+    int value;
+    std::queue<tcb_t*> wait_q;
+    bool init = false;
+    std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
+} semaphore;
 
 
 /* 
