@@ -275,6 +275,7 @@ void pthread_exit(void *value_ptr) {
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
 	printf("thread posting\n");
     sem_post(thread_pool.front()->sem_synch);
+	printf("thread done posting\n");
 	num_threads_exited++; //increment because thread has exited
     unlock();
 	//wait until exit code has been collected to clean this thread up
