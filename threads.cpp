@@ -147,7 +147,7 @@ void init() {
 	interval_timer.it_interval = interval_timer.it_value;
 
 	/* create thread control buffer for main thread, set as current active tcb */
-	mainThread = (tcb_t*)malloc(sizeof(tcb_t));
+	main_tcb = (tcb_t*)malloc(sizeof(tcb_t));
 	printf("MAKING MAIN THREAD\n");
 	main_tcb->id = 0;
 	printf("SEGFAULT?\n");
