@@ -145,18 +145,17 @@ void init() {
 	interval_timer.it_value.tv_usec = (INTERVAL*1000) % 1000000;
 	/* next timer should use the same time interval */
 	interval_timer.it_interval = interval_timer.it_value;
-
 	/* create thread control buffer for main thread, set as current active tcb */
 	main_tcb = (tcb_t*)malloc(sizeof(tcb_t));
 	main_tcb->id = 0;
 	main_tcb->stack = NULL;
-
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-
+	printf("Initializing semaphore...\n");
     sem_init(main_tcb->sem_synch, 0, 1);
 	//end change
+	printf("SEGFAULT?\n");
 
 	/* front of thread_pool is the active thread */
 	thread_pool.push(main_tcb);
@@ -165,7 +164,6 @@ void init() {
 	garbage_collector = (tcb_t*)malloc(sizeof(tcb_t));
 	garbage_collector->id = 128;
 	garbage_collector->stack = (char *) malloc (32767);
-	printf("SEGFAULT?\n");
 	/* initialize jump buf structure to be 0, just in case there's garbage */
 	memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
 	/* the jmp buffer has a stored signal mask; zero it out just in case */
@@ -174,7 +172,6 @@ void init() {
 	/* garbage collector 'lives' in the_nowhere_zone */
 	garbage_collector->jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(garbage_collector->stack+32759));
 	garbage_collector->jb->__jmpbuf[5] = ptr_mangle((uintptr_t)the_nowhere_zone);
-	printf("SEGFAULT?\n");
 	/* Initialize timer and wait for first sigalarm to go off */
 	START_TIMER;
 	pause();	
@@ -207,7 +204,6 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	tmp_tcb = (tcb_t*)malloc(sizeof(tcb_t));
 	tmp_tcb->id = id_counter++;
 	*restrict_thread = tmp_tcb->id;
-	printf("SEGFAULT?\n");
 	/* simulate function call by pushing arguments and return address to the stack
 	   remember the stack grows down, and that threads should implicitly return to
 	   pthread_exit after done with start_routine */
@@ -462,7 +458,9 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 }
 
 int sem_init(sem_t *sem, int pshared, unsigned value) {
+	sem = (sem_t*)malloc(sizeof(sem_t));
     semaphore *temp;
+	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
