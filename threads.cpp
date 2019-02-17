@@ -463,9 +463,10 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 }
 
 int sem_destroy(sem_t *sem) {
-    if (sem->__align->init) {
-        //free(sem->__align->init->wait_q);
-        free(sem->__align->init);
+	intptr_t sem_struct = (intptr_t) sem->__align;
+    if (sem_struct->init) {
+        //free(sem_struct->init->wait_q);
+        free(sem_struct->init);
         free(sem);
         return 1; // 1 is successful
     }
@@ -478,32 +479,34 @@ int sem_destroy(sem_t *sem) {
 
 int sem_wait(sem_t *sem) {
 	lock();
-    if (sem->__align->value > 0) {
-        sem->__align->value--;
+	intptr_t sem_struct = (intptr_t) sem->__align;
+    if (sem_struct->value > 0) {
+        sem_struct->value--;
 		unlock();
         return 1;
     }
     else {
 		thread_pool.front()->status = BLOCKED;
-		sem->__align->wait_q.push(thread_pool.front());
+		sem_struct->wait_q.push(thread_pool.front());
 		unlock();
-		while (!sem->__align->lock_stream.test_and_set());
-		sem->__align->value--;
+		while (!sem_struct->lock_stream.test_and_set());
+		sem_struct->value--;
 		return 1;
 	}
 }
 
 int sem_post(sem_t *sem) {
 	lock();
-    sem->__align->value++;
-    if (sem->__align->value == 1) {
+	intptr_t sem_struct = (intptr_t) sem->__align;
+	sem_struct->value++;
+    if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
-		tcb_t temp = sem->__align->wait_q.front();
-		sem->__align->wait_q.pop();
+		tcb_t temp = sem_struct->wait_q.front();
+		sem_struct->wait_q.pop();
         temp->status = READY;
 		//clear the semaphores lock stream
-        sem->__align->lock_stream.clear();
-		sem->__align->value--;
+		sem_struct->lock_stream.clear();
+		sem_struct->value--;
 		//context switch --> Hoare semantics
 		unlock();
 		pause(); // should work as next thread will always occur before this one
