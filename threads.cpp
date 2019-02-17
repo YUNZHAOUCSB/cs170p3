@@ -148,10 +148,9 @@ void init() {
 
 	/* create thread control buffer for main thread, set as current active tcb */
 	printf("MAKING MAIN THREAD\n");
+	main_tcb.id = 0;
 	printf("SEGFAULT?\n");
-	main_tcb->id = 0;
-	printf("SEGFAULT?\n");
-	main_tcb->stack = NULL;
+	main_tcb.stack = NULL;
 
     //changed from original code
     // set status to ready
