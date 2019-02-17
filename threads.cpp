@@ -500,6 +500,7 @@ int sem_wait(sem_t *sem) {
 int sem_post(sem_t *sem) {
 	lock();
 	semaphore* sem_struct = (semaphore*) sem->__align;
+	printf("semaphore value: %d", sem_struct->value);
 	sem_struct->value++;
     if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
