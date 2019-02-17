@@ -1,7 +1,7 @@
 /*
  * CS170 - Operating Systems
  * Project 2 Solution
- * Author: me myself and i
+ * Author: Evan Murray, 8954976
  */
 
 
@@ -58,20 +58,21 @@ static struct sigaction act;
 
 
 //thread statuses
-#define RUNNING 0
 #define READY 1
 #define BLOCKED 2
 #define EXITED 3
 
 //max value for semaphores
 #define SEM_VALUE_MAX 65536
+//max value for threads
+#define MAX_THREADS 128
 
 /*
  * Semaphore struct definition
  */
 typedef struct {
     int value;
-    std::queue<tcb_t> *wait_q;
+    std::queue<tcb_t*> wait_q;
     bool init = false;
     std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
 } semaphore;
@@ -88,10 +89,12 @@ typedef struct {
 	/* stack pointer for thread; for main thread, this will be NULL */	
 	char *stack;
 
+	//changed from original code
     //for thread synchronization
     int status;
-    int return_value;
+    void *return_value;
     sem_t sem_synch;
+	//end change
 
 } tcb_t;
 
@@ -101,17 +104,18 @@ typedef struct {
  */
 
 /* queue for pool thread, easy for round robin */
-static std::queue<tcb_t> thread_pool;
+static std::queue<tcb_t*> thread_pool;  //CHANGED TO QUEUE OF POINTERS, changed all operations to be pointer ops
 /* keep separate handle for main thread */
-static tcb_t main_tcb;
-static tcb_t garbage_collector;
+static tcb_t* main_tcb; //CHANGED TO POINTER
+static tcb_t* garbage_collector; //CHANGED TO POINTER
 
 /* for assigning id to threads; main implicitly has 0 */
 static unsigned long id_counter = 1; 
 /* we initialize in pthread_create only once */
 static int has_initialized = 0;
 
-
+//added this to see if all threads have exited
+int num_threads_exited = 0;
 
 
 /*
@@ -143,29 +147,30 @@ void init() {
 	interval_timer.it_interval = interval_timer.it_value;
 
 	/* create thread control buffer for main thread, set as current active tcb */
-	main_tcb.id = 0;
-	main_tcb.stack = NULL;
+	main_tcb->id = 0;
+	main_tcb->stack = NULL;
 
     //changed from original code
     // set status to ready
-    main_tcb.status = READY;
-    sem_init(main_tcb.sem_synch, 0, 1);
-	
+    main_tcb->status = READY;
+    sem_init(main_tcb->sem_synch, 0, 1);
+	//end change
+
 	/* front of thread_pool is the active thread */
 	thread_pool.push(main_tcb);
 
 	/* set up garbage collector */
-	garbage_collector.id = 128;
-	garbage_collector.stack = (char *) malloc (32767);
+	garbage_collector->id = 128;
+	garbage_collector->stack = (char *) malloc (32767);
 
 	/* initialize jump buf structure to be 0, just in case there's garbage */
-	memset(&garbage_collector.jb,0,sizeof(garbage_collector.jb));
+	memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
 	/* the jmp buffer has a stored signal mask; zero it out just in case */
-	sigemptyset(&garbage_collector.jb->__saved_mask);
+	sigemptyset(&garbage_collector->jb->__saved_mask);
 
 	/* garbage collector 'lives' in the_nowhere_zone */
-	garbage_collector.jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(garbage_collector.stack+32759));
-	garbage_collector.jb->__jmpbuf[5] = ptr_mangle((uintptr_t)the_nowhere_zone);
+	garbage_collector->jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(garbage_collector->stack+32759));
+	garbage_collector->jb->__jmpbuf[5] = ptr_mangle((uintptr_t)the_nowhere_zone);
 
 	/* Initialize timer and wait for first sigalarm to go off */
 	START_TIMER;
@@ -196,37 +201,39 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	/* create thread control block for new thread
 	   restrict_thread is basically the thread id 
 	   which main will have access to */
-	tcb_t tmp_tcb;
-	tmp_tcb.id = id_counter++;
-	*restrict_thread = tmp_tcb.id;
+	tcb_t *tmp_tcb;
+	tmp_tcb->id = id_counter++;
+	*restrict_thread = tmp_tcb->id;
 
 	/* simulate function call by pushing arguments and return address to the stack
 	   remember the stack grows down, and that threads should implicitly return to
 	   pthread_exit after done with start_routine */
 
-	tmp_tcb.stack = (char *) malloc (32767);
+	tmp_tcb->stack = (char *) malloc (32767);
 
-	*(int*)(tmp_tcb.stack+32763) = (int)restrict_arg;
-	*(int*)(tmp_tcb.stack+32759) = (int)pthread_exit_wrapper;
+	*(int*)(tmp_tcb->stack+32763) = (int)restrict_arg;
+	*(int*)(tmp_tcb->stack+32759) = (int)pthread_exit_wrapper;
 	
 	/* initialize jump buf structure to be 0, just in case there's garbage */
-	memset(&tmp_tcb.jb,0,sizeof(tmp_tcb.jb));
+	memset(&tmp_tcb->jb,0,sizeof(tmp_tcb->jb));
 	/* the jmp buffer has a stored signal mask; zero it out just in case */
-	sigemptyset(&tmp_tcb.jb->__saved_mask);
+	sigemptyset(&tmp_tcb->jb->__saved_mask);
 	
 	/* modify the stack pointer and instruction pointer for this thread's
 	   jmp buffer. don't forget to mangle! */
-	tmp_tcb.jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(tmp_tcb.stack+32759));
-	tmp_tcb.jb->__jmpbuf[5] = ptr_mangle((uintptr_t)start_routine);
+	tmp_tcb->jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(tmp_tcb->stack+32759));
+	tmp_tcb->jb->__jmpbuf[5] = ptr_mangle((uintptr_t)start_routine);
 
     //changed from original code
     // set status to ready
-    tmp_tcb.status = READY;
-    sem_init(tmp_tcb.sem_synch, 0, 1);
+    tmp_tcb->status = READY;
+    sem_init(tmp_tcb->sem_synch, 0, 1);
+	//end change
 
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
-    
+
+
     /* resume timer */
     RESUME_TIMER;
 
@@ -246,7 +253,7 @@ pthread_t pthread_self(void) {
 	if(thread_pool.size() == 0) {
 		return 0;
 	} else {
-		return (pthread_t)thread_pool.front().id;
+		return (pthread_t)thread_pool.front()->id;
 	}
 }
 
@@ -265,25 +272,27 @@ void pthread_exit(void *value_ptr) {
 		exit(0);
 	}
 
+	//changed from original code
     //Does this collect pointer right?
     lock();
-    thread_pool.front().status = EXITED;
-    thread_pool.front().return_value = value_ptr;
-    sem_post(thread_pool.front().sem_synch);
+    thread_pool.front()->status = EXITED;
+    thread_pool.front()->return_value = value_ptr; //TODO: is this right?
+    sem_post(thread_pool.front()->sem_synch);
+	num_threads_exited++; //increment because thread has exited
     unlock();
+	//wait until exit code has been collected to clean this thread up
     pause();
+	//end change
 
-    //clean up the thread after return value has been collected by join
     STOP_TIMER;
-
-    if(thread_pool.front().id == 0) {
+	if(thread_pool.front()->id == 0) {
         /* if its the main thread, still keep a reference to it
            we'll longjmp here when all other threads are done */
         main_tcb = thread_pool.front();
-        if(setjmp(main_tcb.jb)) {
+        if(setjmp(main_tcb->jb)) {
             /* garbage collector's stack should be freed by OS upon exit;
                We'll free anyways, for completeness */
-            free((void*) garbage_collector.stack);
+            free((void*) garbage_collector->stack);
             exit(0);
         }
     }
@@ -291,7 +300,7 @@ void pthread_exit(void *value_ptr) {
     /* Jump to garbage collector stack frame to free memory and scheduler another thread.
        Since we're currently "living" on this thread's stack frame, deleting it while we're
        on it would be undefined behavior */
-    longjmp(garbage_collector.jb,1);
+    longjmp(garbage_collector->jb,1);
 }
 
 
@@ -302,8 +311,6 @@ void pthread_exit(void *value_ptr) {
  */
 void signal_handler(int signo) {
 
-    //TODO: figure out if all threads have exited, and when that is, clean them all up
-
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -312,20 +319,29 @@ void signal_handler(int signo) {
 	/* Time to schedule another thread! Use setjmp to save this thread's context
 	   on direct invocation, setjmp returns 0. if jumped to from longjmp, returns
 	   non-zero value. */
-	if(setjmp(thread_pool.front().jb) == 0) {
+	if(setjmp(thread_pool.front()->jb) == 0) {
 		/* switch threads */
-        thread_pool.front().status = READY;
 
-        // changed from original code
-        //if thread is blocked then find next thread that isn't blocked
+		// changed from original code
+		if (num_threads_exited == thread_pool.size()) {
+			//all threads have exited, none are blocked
+			//set all their statuses to ready so they can be cleaned up
+			std::queue<tcb_t> thread_pool_copy = thread_pool;
+			while (thread_pool_copy.size() > 0) {
+				thread_pool_copy.front()-> status = ready;
+				thread_pool_copy.pop();
+			}
+			num_threads_exited = -1;
+		}
+        //if thread is blocked then find next thread that isn't blocked or exited
         do {
             thread_pool.push(thread_pool.front());
             thread_pool.pop();
         } while (thread_pool.front() == BLOCKED || thread_pool.front() == EXITED);
+		//end change
 
 		/* resume scheduler and GOOOOOOOOOO */
-        thread_pool.front().staus = RUNNING;
-		longjmp(thread_pool.front().jb,1);
+		longjmp(thread_pool.front()->jb,1);
 	}
 
 	/* resume execution after being longjmped to */
@@ -343,11 +359,15 @@ void the_nowhere_zone(void) {
 	/* free stack memory of exiting thread 
 	   Note: if this is main thread, we're OK since
 	   free(NULL) works */ 
-	free((void*) thread_pool.front().stack);
-	thread_pool.front().stack = NULL;
+	free((void*) thread_pool.front()->stack);
+	thread_pool.front()->stack = NULL;
 
+	//changed from original code
     //free the semaphore
-    sem_destroy(thread_pool.front().sem_synch);
+    sem_destroy(thread_pool.front()->sem_synch);
+	//decrement because thread will no longer be apart of queue
+	num_threads_exited--;
+	//end change
 
 	/* Don't schedule the thread anymore */
 	thread_pool.pop();
@@ -355,17 +375,19 @@ void the_nowhere_zone(void) {
 	/* If the last thread just exited, jump to main_tcb and exit.
 	   Otherwise, start timer again and jump to next thread*/
 	if(thread_pool.size() == 0) {
-		longjmp(main_tcb.jb,1);
+		longjmp(main_tcb->jb,1);
 	} else {
 
         //changed from original code
         //makes sure next thread were long jumping to isnt blocked or exited
-        while (thread_pool.front().status == BLOCKED || thread_pool.front().status == EXITED) {
+        while (thread_pool.front()->status == BLOCKED || thread_pool.front()->status == EXITED) {
             thread_pool.push(thread_pool.front());
             thread_pool.pop();
         }
+		//end change
+
 		START_TIMER;
-        longjmp(thread_pool.front().jb,1);
+        longjmp(thread_pool.front()->jb,1);
 	}
 }
 
@@ -411,19 +433,23 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 
     lock();
 
-    //how to get pthread_t threads tcb_t based on thread?
-    tcb_t temp;
-    // /\put that thread in temp, this is a dummy variable for now
+    //get thread from threadID if it is created
+	std::queue<tcb_t> thread_pool_copy = thread_pool;
+	tcb_t *temp = thread_pool_copy.front();
+	while (temp->id != thread && thread_pool_copy.size() != 0) {
+		thread_pool_copy.pop();
+		temp = thread_pool_copy.front();
+	}
 
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
-    sem_wait(temp.sem_synch);
+    sem_wait(temp->sem_synch);
 
-    *value_ptr = temp.return_value;
+    *value_ptr = temp->return_value;
 
     //change status to ready so pthread_exit can now clean it up
-    temp.status = READY;
+    temp->status = READY;
 
     //return to the running thread's code
     return 1;
@@ -438,7 +464,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 
 int sem_destroy(sem_t *sem) {
     if (sem->__align->init) {
-        free(sem->__align->init->wait_q);
+        //free(sem->__align->init->wait_q);
         free(sem->__align->init);
         free(sem);
         return 1; // 1 is successful
@@ -454,14 +480,15 @@ int sem_wait(sem_t *sem) {
 	lock();
     if (sem->__align->value > 0) {
         sem->__align->value--;
+		unlock();
         return 1;
     }
     else {
-		thread_pool.front().status = BLOCKED;
+		thread_pool.front()->status = BLOCKED;
 		sem->__align->wait_q.push(thread_pool.front());
 		unlock();
 		while (!sem->__align->lock_stream.test_and_set());
-		sem->align->value--;
+		sem->__align->value--;
 		return 1;
 	}
 
@@ -474,14 +501,19 @@ int sem_post(sem_t *sem) {
 		//pop thread from front of wait q and set its status to ready
 		tcb_t temp = sem->__align->wait_q.front();
 		sem->__align->wait_q.pop();
-        temp.status = READY;
+        temp->status = READY;
 		//clear the semaphores lock stream
         sem->__align->lock_stream.clear();
 		sem->align->value--;
 		//context switch --> Hoare semantics
 		unlock();
-		pause();
+		pause(); // should work as next thread will always occur before this one
+		// think about the correctness of this some more
     }
+	else {
+		unlock();
+	}
+	return 1;
 }
 
 
