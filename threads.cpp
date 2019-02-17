@@ -226,6 +226,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 
     //changed from original code
     // set status to ready
+	printf("ADDING SEMAPHORE\n");
     tmp_tcb->status = READY;
     sem_init(tmp_tcb->sem_synch, 0, 1);
 	//end change
