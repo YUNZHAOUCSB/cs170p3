@@ -148,9 +148,9 @@ void init() {
 
 	/* create thread control buffer for main thread, set as current active tcb */
 	printf("MAKING MAIN THREAD\n");
-	main_tcb.id = 0;
+	//main_tcb->id = 0;
 	printf("SEGFAULT?\n");
-	main_tcb.stack = NULL;
+	main_tcb->stack = NULL;
 
     //changed from original code
     // set status to ready
@@ -191,7 +191,6 @@ void init() {
  */
 int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_attr,
                    void *(*start_routine)(void*), void *restrict_arg) {
-	printf("THREAD CREATION\n");
 	/* set up thread subsystem and timer */
 	if(!has_initialized) {
 		has_initialized = 1;
