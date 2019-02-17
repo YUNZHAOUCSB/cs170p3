@@ -463,10 +463,10 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 }
 
 int sem_destroy(sem_t *sem) {
-	semaphore* sem_struct = (sempaphore*) sem->__align;
+	semaphore* sem_struct = (semaphore*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
-        free(sem_struct->init);
+        free(sem_struct);
         free(sem);
         return 1; // 1 is successful
     }
@@ -501,7 +501,7 @@ int sem_post(sem_t *sem) {
 	sem_struct->value++;
     if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
-		tcb_t temp = sem_struct->wait_q.front();
+		tcb_t *temp = sem_struct->wait_q.front();
 		sem_struct->wait_q.pop();
         temp->status = READY;
 		//clear the semaphores lock stream
