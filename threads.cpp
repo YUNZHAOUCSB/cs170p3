@@ -106,8 +106,8 @@ typedef struct {
 /* queue for pool thread, easy for round robin */
 static std::queue<tcb_t*> thread_pool;  //CHANGED TO QUEUE OF POINTERS, changed all operations to be pointer ops
 /* keep separate handle for main thread */
-static tcb_t* main_tcb; //CHANGED TO POINTER
-static tcb_t* garbage_collector; //CHANGED TO POINTER
+static tcb_t *main_tcb; //CHANGED TO POINTER
+static tcb_t *garbage_collector; //CHANGED TO POINTER
 
 /* for assigning id to threads; main implicitly has 0 */
 static unsigned long id_counter = 1; 
