@@ -165,16 +165,16 @@ void init() {
 	garbage_collector = (tcb_t*)malloc(sizeof(tcb_t));
 	garbage_collector->id = 128;
 	garbage_collector->stack = (char *) malloc (32767);
-
+	printf("SEGFAULT?\n");
 	/* initialize jump buf structure to be 0, just in case there's garbage */
-	//memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
+	memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
 	/* the jmp buffer has a stored signal mask; zero it out just in case */
 	sigemptyset(&garbage_collector->jb->__saved_mask);
 
 	/* garbage collector 'lives' in the_nowhere_zone */
 	garbage_collector->jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(garbage_collector->stack+32759));
 	garbage_collector->jb->__jmpbuf[5] = ptr_mangle((uintptr_t)the_nowhere_zone);
-
+	printf("SEGFAULT?\n");
 	/* Initialize timer and wait for first sigalarm to go off */
 	START_TIMER;
 	pause();	
