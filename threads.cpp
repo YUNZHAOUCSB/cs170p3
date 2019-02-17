@@ -167,7 +167,7 @@ void init() {
 	garbage_collector->stack = (char *) malloc (32767);
 
 	/* initialize jump buf structure to be 0, just in case there's garbage */
-	memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
+	//memset(&garbage_collector->jb,0,sizeof(garbage_collector->jb));
 	/* the jmp buffer has a stored signal mask; zero it out just in case */
 	sigemptyset(&garbage_collector->jb->__saved_mask);
 
