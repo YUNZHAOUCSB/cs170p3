@@ -328,7 +328,7 @@ void signal_handler(int signo) {
 			//set all their statuses to ready so they can be cleaned up
 			std::queue<tcb_t> thread_pool_copy = thread_pool;
 			while (thread_pool_copy.size() > 0) {
-				thread_pool_copy.front()-> status = ready;
+				thread_pool_copy.front()->status = READY;
 				thread_pool_copy.pop();
 			}
 			num_threads_exited = -1;
@@ -337,7 +337,7 @@ void signal_handler(int signo) {
         do {
             thread_pool.push(thread_pool.front());
             thread_pool.pop();
-        } while (thread_pool.front() == BLOCKED || thread_pool.front() == EXITED);
+        } while (thread_pool.front()->status == BLOCKED || thread_pool.front()->status == EXITED);
 		//end change
 
 		/* resume scheduler and GOOOOOOOOOO */
@@ -426,7 +426,7 @@ void unlock() {
 void pthread_exit_wrapper (){
     unsigned  int res;
     asm("movl %%eax ,  %0\n":"=r "(res));
-    pthreadexit ((void *)  res) ;
+    pthread_exit((void *)  res) ;
 }
 
 int pthread_join(pthread_t thread, void **value_ptr) {
