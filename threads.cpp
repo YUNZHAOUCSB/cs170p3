@@ -463,7 +463,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 }
 
 int sem_destroy(sem_t *sem) {
-	intptr_t sem_struct = (intptr_t) sem->__align;
+	int* sem_struct = (int*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
         free(sem_struct->init);
@@ -479,7 +479,7 @@ int sem_destroy(sem_t *sem) {
 
 int sem_wait(sem_t *sem) {
 	lock();
-	intptr_t sem_struct = (intptr_t) sem->__align;
+	int* sem_struct = (int*) sem->__align;
     if (sem_struct->value > 0) {
         sem_struct->value--;
 		unlock();
@@ -497,7 +497,7 @@ int sem_wait(sem_t *sem) {
 
 int sem_post(sem_t *sem) {
 	lock();
-	intptr_t sem_struct = (intptr_t) sem->__align;
+	int* sem_struct = (int*) sem->__align;
 	sem_struct->value++;
     if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
