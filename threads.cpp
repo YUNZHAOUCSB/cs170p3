@@ -147,8 +147,9 @@ void init() {
 	interval_timer.it_interval = interval_timer.it_value;
 
 	/* create thread control buffer for main thread, set as current active tcb */
+	mainThread = (tcb_t*)malloc(sizeof(tcb_t));
 	printf("MAKING MAIN THREAD\n");
-	//main_tcb->id = 0;
+	main_tcb->id = 0;
 	printf("SEGFAULT?\n");
 	main_tcb->stack = NULL;
 
@@ -163,6 +164,7 @@ void init() {
 	thread_pool.push(main_tcb);
 
 	/* set up garbage collector */
+	garbage_collector = (tcb_t*)malloc(sizeof(tcb_t));
 	garbage_collector->id = 128;
 	garbage_collector->stack = (char *) malloc (32767);
 
@@ -204,6 +206,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	   restrict_thread is basically the thread id 
 	   which main will have access to */
 	tcb_t *tmp_tcb;
+	tmp_tcb = (tcb_t*)malloc(sizeof(tcb_t));
 	tmp_tcb->id = id_counter++;
 	*restrict_thread = tmp_tcb->id;
 
