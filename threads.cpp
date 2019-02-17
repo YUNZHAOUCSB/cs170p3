@@ -501,7 +501,7 @@ int sem_post(sem_t *sem) {
     printf("locking...\n");
 	lock();
     printf("done locking\n");
-	semaphore* sem_struct = (semaphore*) sem->__align;
+	semaphore* sem_struct = &sem->__align;
 	printf("semaphore value: %d\n", sem_struct->value);
 	sem_struct->value++;
     if (sem_struct->value == 1) {
