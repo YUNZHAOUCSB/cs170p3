@@ -326,7 +326,7 @@ void signal_handler(int signo) {
 		if (num_threads_exited == thread_pool.size()) {
 			//all threads have exited, none are blocked
 			//set all their statuses to ready so they can be cleaned up
-			std::queue<*tcb_t> thread_pool_copy = thread_pool;
+			std::queue< tcb_t* > thread_pool_copy = thread_pool;
 			while (thread_pool_copy.size() > 0) {
 				thread_pool_copy.front()->status = READY;
 				thread_pool_copy.pop();
@@ -434,7 +434,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     lock();
 
     //get thread from threadID if it is created
-	std::queue<*tcb_t> thread_pool_copy = thread_pool;
+	std::queue<tcb_t*> thread_pool_copy = thread_pool;
 	tcb_t *temp = thread_pool_copy.front();
 	while (temp->id != thread && thread_pool_copy.size() != 0) {
 		thread_pool_copy.pop();
