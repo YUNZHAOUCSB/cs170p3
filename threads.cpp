@@ -233,7 +233,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
 
-
+	printf("THREAD CREATED\n");
     /* resume timer */
     RESUME_TIMER;
 
@@ -310,6 +310,8 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
+
+	printf("SIGNAL\n");
 
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
