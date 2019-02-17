@@ -150,10 +150,11 @@ void init() {
 	printf("MAKING MAIN THREAD\n");
 	main_tcb->id = 0;
 	main_tcb->stack = NULL;
-
+	printf("SEGFAULT?\n");
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
+
     sem_init(main_tcb->sem_synch, 0, 1);
 	//end change
 
