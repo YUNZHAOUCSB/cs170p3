@@ -104,7 +104,7 @@ typedef struct {
  */
 
 /* queue for pool thread, easy for round robin */
-static std::queue<tcb_t*> thread_pool;  //CHANGED TO QUEUE OF POINTERS, changed all operations to be pointer ops
+std::queue<tcb_t*> thread_pool;  //CHANGED TO QUEUE OF POINTERS, changed all operations to be pointer ops
 /* keep separate handle for main thread */
 tcb_t *main_tcb; //CHANGED TO POINTER
 tcb_t *garbage_collector; //CHANGED TO POINTER
