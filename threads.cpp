@@ -76,7 +76,6 @@ typedef struct {
     std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
 } semaphore;
 
-
 /*
  * Thread Control Block definition 
  */
@@ -92,6 +91,7 @@ typedef struct {
     //for thread synchronization
     int status;
     int return_value;
+    sem_t sem_synch;
 
 } tcb_t;
 
@@ -145,6 +145,11 @@ void init() {
 	/* create thread control buffer for main thread, set as current active tcb */
 	main_tcb.id = 0;
 	main_tcb.stack = NULL;
+
+    //changed from original code
+    // set status to ready
+    main_tcb.status = READY;
+    sem_init(main_tcb.sem_synch, 0, 1);
 	
 	/* front of thread_pool is the active thread */
 	thread_pool.push(main_tcb);
@@ -214,8 +219,10 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	tmp_tcb.jb->__jmpbuf[4] = ptr_mangle((uintptr_t)(tmp_tcb.stack+32759));
 	tmp_tcb.jb->__jmpbuf[5] = ptr_mangle((uintptr_t)start_routine);
 
+    //changed from original code
     // set status to ready
     tmp_tcb.status = READY;
+    sem_init(tmp_tcb.sem_synch, 0, 1);
 
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
@@ -253,19 +260,38 @@ pthread_t pthread_self(void) {
  */
 void pthread_exit(void *value_ptr) {
 
-    //Does this collect pointer right?
-    thread_pool.front().status = EXITED;
-    thread_pool.front().return_value = value_ptr;
-
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
 	}
 
-    //don't clean up everything, do it in pthread_join()
+    //Does this collect pointer right?
+    lock();
+    thread_pool.front().status = EXITED;
+    thread_pool.front().return_value = value_ptr;
+    sem_post(thread_pool.front().sem_synch);
+    unlock();
+    pause();
 
+    //clean up the thread after return value has been collected by join
+    STOP_TIMER;
 
-    //though, if all threads have exited, clean all of them up
+    if(thread_pool.front().id == 0) {
+        /* if its the main thread, still keep a reference to it
+           we'll longjmp here when all other threads are done */
+        main_tcb = thread_pool.front();
+        if(setjmp(main_tcb.jb)) {
+            /* garbage collector's stack should be freed by OS upon exit;
+               We'll free anyways, for completeness */
+            free((void*) garbage_collector.stack);
+            exit(0);
+        }
+    }
+
+    /* Jump to garbage collector stack frame to free memory and scheduler another thread.
+       Since we're currently "living" on this thread's stack frame, deleting it while we're
+       on it would be undefined behavior */
+    longjmp(garbage_collector.jb,1);
 }
 
 
@@ -275,6 +301,8 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
+
+    //TODO: figure out if all threads have exited, and when that is, clean them all up
 
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
@@ -287,11 +315,13 @@ void signal_handler(int signo) {
 	if(setjmp(thread_pool.front().jb) == 0) {
 		/* switch threads */
         thread_pool.front().status = READY;
+
+        // changed from original code
         //if thread is blocked then find next thread that isn't blocked
         do {
             thread_pool.push(thread_pool.front());
             thread_pool.pop();
-        } while (thread_pool.front() == BLOCKED);
+        } while (thread_pool.front() == BLOCKED || thread_pool.front() == EXITED);
 
 		/* resume scheduler and GOOOOOOOOOO */
         thread_pool.front().staus = RUNNING;
@@ -316,6 +346,9 @@ void the_nowhere_zone(void) {
 	free((void*) thread_pool.front().stack);
 	thread_pool.front().stack = NULL;
 
+    //free the semaphore
+    sem_destroy(thread_pool.front().sem_synch);
+
 	/* Don't schedule the thread anymore */
 	thread_pool.pop();
 
@@ -324,8 +357,15 @@ void the_nowhere_zone(void) {
 	if(thread_pool.size() == 0) {
 		longjmp(main_tcb.jb,1);
 	} else {
+
+        //changed from original code
+        //makes sure next thread were long jumping to isnt blocked or exited
+        while (thread_pool.front().status == BLOCKED || thread_pool.front().status == EXITED) {
+            thread_pool.push(thread_pool.front());
+            thread_pool.pop();
+        }
 		START_TIMER;
-		longjmp(thread_pool.front().jb,1);
+        longjmp(thread_pool.front().jb,1);
 	}
 }
 
@@ -368,40 +408,25 @@ void pthread_exit_wrapper (){
 }
 
 int pthread_join(pthread_t thread, void **value_ptr) {
-    //calling thread is thread on front
 
-    //how to check if pthread_t thread is still running?
+    lock();
 
-	//TODO: use semaphores or test&set operation
-    /*
-    while(thread.pool.front().return_value == NULL) {
-        thread_pool.front().status = BLOCKED;
-    }
-     */
+    //how to get pthread_t threads tcb_t based on thread?
+    tcb_t temp;
+    // /\put that thread in temp, this is a dummy variable for now
 
-    //set value_ptr to threads return_value
+    unlock();
 
-    //Free the thread now that we have used its return value
+    //wait until the thread parameter has exited and its return value is stored
+    sem_wait(temp.sem_synch);
 
-    /* stop the timer so we don't get interrupted */
-    STOP_TIMER;
+    *value_ptr = temp.return_value;
 
-    if(thread_pool.front().id == 0) {
-        /* if its the main thread, still keep a reference to it
-           we'll longjmp here when all other threads are done */
-        main_tcb = thread_pool.front();
-        if(setjmp(main_tcb.jb)) {
-            /* garbage collector's stack should be freed by OS upon exit;
-               We'll free anyways, for completeness */
-            free((void*) garbage_collector.stack);
-            exit(0);
-        }
-    }
+    //change status to ready so pthread_exit can now clean it up
+    temp.status = READY;
 
-    /* Jump to garbage collector stack frame to free memory and scheduler another thread.
-       Since we're currently "living" on this thread's stack frame, deleting it while we're
-       on it would be undefined behavior */
-    longjmp(garbage_collector.jb,1);
+    //return to the running thread's code
+    return 1;
 }
 
 int sem_init(sem_t *sem, int pshared, unsigned value) {
@@ -415,7 +440,7 @@ int sem_destroy(sem_t *sem) {
     if (sem->__align->init) {
         free(sem->__align->init->wait_q);
         free(sem->__align->init);
-        free(*sem);
+        free(sem);
         return 1; // 1 is successful
     }
     else {
@@ -425,7 +450,6 @@ int sem_destroy(sem_t *sem) {
 }
 
 
-//TODO: do stuff with wait_q
 int sem_wait(sem_t *sem) {
 	lock();
     if (sem->__align->value > 0) {
@@ -457,8 +481,6 @@ int sem_post(sem_t *sem) {
 		//context switch --> Hoare semantics
 		unlock();
 		pause();
-
-
     }
 }
 
