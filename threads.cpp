@@ -153,6 +153,7 @@ void init() {
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
+	printf("CREATING SEMAPHORE\n");
     sem_init(main_tcb->sem_synch, 0, 1);
 	//end change
 
@@ -188,7 +189,6 @@ void init() {
  */
 int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_attr,
                    void *(*start_routine)(void*), void *restrict_arg) {
-	
 	/* set up thread subsystem and timer */
 	if(!has_initialized) {
 		has_initialized = 1;
