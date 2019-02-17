@@ -147,13 +147,13 @@ void init() {
 	interval_timer.it_interval = interval_timer.it_value;
 
 	/* create thread control buffer for main thread, set as current active tcb */
+	printf("MAKING MAIN THREAD\n");
 	main_tcb->id = 0;
 	main_tcb->stack = NULL;
 
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-	printf("CREATING SEMAPHORE\n");
     sem_init(main_tcb->sem_synch, 0, 1);
 	//end change
 
