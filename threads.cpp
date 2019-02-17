@@ -152,10 +152,8 @@ void init() {
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-	printf("Initializing semaphore...\n");
     sem_init(main_tcb->sem_synch, 0, 1);
 	//end change
-	printf("SEGFAULT?\n");
 
 	/* front of thread_pool is the active thread */
 	thread_pool.push(main_tcb);
@@ -225,7 +223,6 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 
     //changed from original code
     // set status to ready
-	printf("ADDING SEMAPHORE\n");
     tmp_tcb->status = READY;
     sem_init(tmp_tcb->sem_synch, 0, 1);
 	//end change
@@ -233,7 +230,6 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
 
-	printf("THREAD CREATED\n");
     /* resume timer */
     RESUME_TIMER;
 
@@ -266,7 +262,7 @@ pthread_t pthread_self(void) {
  * here, we should clean up thread (and exit if no more threads) 
  */
 void pthread_exit(void *value_ptr) {
-
+	printf("THREAD EXITING\n");
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
@@ -323,7 +319,7 @@ void signal_handler(int signo) {
 	   non-zero value. */
 	if(setjmp(thread_pool.front()->jb) == 0) {
 		/* switch threads */
-
+		printf("switching threads!\n");
 		// changed from original code
 		if (num_threads_exited == thread_pool.size()) {
 			//all threads have exited, none are blocked
