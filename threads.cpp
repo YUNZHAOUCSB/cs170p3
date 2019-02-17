@@ -211,8 +211,8 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 
 	tmp_tcb->stack = (char *) malloc (32767);
 
-	*(int*)(tmp_tcb->stack+32763) = (intptr_t)restrict_arg;
-	*(int*)(tmp_tcb->stack+32759) = (intptr_t)pthread_exit_wrapper;
+	*(int*)(tmp_tcb->stack+32763) = (int)restrict_arg;
+	*(int*)(tmp_tcb->stack+32759) = (int)pthread_exit_wrapper;
 	
 	/* initialize jump buf structure to be 0, just in case there's garbage */
 	memset(&tmp_tcb->jb,0,sizeof(tmp_tcb->jb));
