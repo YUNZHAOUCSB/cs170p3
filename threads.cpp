@@ -326,7 +326,7 @@ void signal_handler(int signo) {
 		if (num_threads_exited == thread_pool.size()) {
 			//all threads have exited, none are blocked
 			//set all their statuses to ready so they can be cleaned up
-			std::queue<tcb_t> thread_pool_copy = thread_pool;
+			std::queue<*tcb_t> thread_pool_copy = thread_pool;
 			while (thread_pool_copy.size() > 0) {
 				thread_pool_copy.front()->status = READY;
 				thread_pool_copy.pop();
@@ -434,7 +434,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     lock();
 
     //get thread from threadID if it is created
-	std::queue<tcb_t> thread_pool_copy = thread_pool;
+	std::queue<*tcb_t> thread_pool_copy = thread_pool;
 	tcb_t *temp = thread_pool_copy.front();
 	while (temp->id != thread && thread_pool_copy.size() != 0) {
 		thread_pool_copy.pop();
@@ -459,7 +459,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
     semaphore *temp;
     temp->value = value;
     temp->init = true;
-    sem->__align = temp;
+    sem->__align = (long int)temp;
 }
 
 int sem_destroy(sem_t *sem) {
@@ -491,7 +491,6 @@ int sem_wait(sem_t *sem) {
 		sem->__align->value--;
 		return 1;
 	}
-
 }
 
 int sem_post(sem_t *sem) {
@@ -504,7 +503,7 @@ int sem_post(sem_t *sem) {
         temp->status = READY;
 		//clear the semaphores lock stream
         sem->__align->lock_stream.clear();
-		sem->align->value--;
+		sem->__align->value--;
 		//context switch --> Hoare semantics
 		unlock();
 		pause(); // should work as next thread will always occur before this one
