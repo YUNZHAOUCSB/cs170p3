@@ -148,9 +148,7 @@ void init() {
 
 	/* create thread control buffer for main thread, set as current active tcb */
 	main_tcb = (tcb_t*)malloc(sizeof(tcb_t));
-	printf("MAKING MAIN THREAD\n");
 	main_tcb->id = 0;
-	printf("SEGFAULT?\n");
 	main_tcb->stack = NULL;
 
     //changed from original code
@@ -209,7 +207,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	tmp_tcb = (tcb_t*)malloc(sizeof(tcb_t));
 	tmp_tcb->id = id_counter++;
 	*restrict_thread = tmp_tcb->id;
-
+	printf("SEGFAULT?\n");
 	/* simulate function call by pushing arguments and return address to the stack
 	   remember the stack grows down, and that threads should implicitly return to
 	   pthread_exit after done with start_routine */
