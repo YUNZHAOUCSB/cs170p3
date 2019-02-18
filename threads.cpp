@@ -490,7 +490,7 @@ int sem_wait(sem_t *sem) {
 	(sem_struct->wait_q)->push(thread_pool.front());
 	unlock();
 	printf("Calling wait...\n");
-	sem_struct->lock_stream = 1;
+	sem_struct->lock_stream.test_and_set();
 	while (sem_struct->lock_stream.test_and_set());
 	printf("Returned from wait!\n");
 	sem_struct->value--;
