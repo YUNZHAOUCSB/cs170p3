@@ -274,6 +274,7 @@ void pthread_exit(void *value_ptr) {
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
 	printf("thread posting\n");
+	std::cout << "sem_struct: " << thread_pool.front()->sem_synch->__align << std::endl;
     sem_post(thread_pool.front()->sem_synch);
 	printf("thread done posting\n");
 	num_threads_exited++; //increment because thread has exited
