@@ -18,7 +18,7 @@
 #include <queue>
 #include <semaphore.h>
 #include <atomic>
-
+#include <iostream>
 
 
 /* 
@@ -500,7 +500,7 @@ int sem_wait(sem_t *sem) {
 int sem_post(sem_t *sem) {
 	lock();
     printf("done locking\n");
-	printf("sem_struct: %d\n", sem->__align);
+	std::cout << "sem_struct: " << sem->__align << endl;
 	semaphore* sem_struct = (semaphore*) (sem->__align);
 	printf("semaphore value: %d\n", sem_struct->value);
 	sem_struct->value++;
