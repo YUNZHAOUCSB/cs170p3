@@ -418,6 +418,7 @@ void unlock() {
 }
 
 void pthread_exit_wrapper (){
+	printf("IN WRAPPER\n");
     unsigned  int res;
     asm("movl %%eax ,  %0\n":"=r "(res));
     pthread_exit((void *)  res) ;
@@ -437,7 +438,6 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
-	printf("Waiting on semaphore...\n");
     sem_wait(&(temp->sem_synch));
 
 	//std::cout << "thread return value: " << temp->return_value << std::endl;
@@ -489,10 +489,8 @@ int sem_wait(sem_t *sem) {
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
 	unlock();
-	printf("Calling wait...\n");
-	sem_struct->lock_stream.test_and_set();
+	sem_struct->lock_stream.test_and_set(); //sets lock_stream to TRUE, it was false initially
 	while (sem_struct->lock_stream.test_and_set());
-	printf("Returned from wait!\n");
 	sem_struct->value--;
 	return 1;
 }
