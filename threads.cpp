@@ -461,11 +461,11 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
-    sem->__align = (long int)temp;
+    sem->__align = (long int)&temp;
 }
 
 int sem_destroy(sem_t *sem) {
-	semaphore* sem_struct = *(sem->__align);
+	semaphore *sem_struct = (semaphore*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
         free(sem_struct);
@@ -481,7 +481,7 @@ int sem_destroy(sem_t *sem) {
 
 int sem_wait(sem_t *sem) {
 	lock();
-	semaphore* sem_struct = *(sem->__align);
+	semaphore* sem_struct = (semaphore*) sem->__align;
     if (sem_struct->value > 0) {
         sem_struct->value--;
 		unlock();
@@ -501,7 +501,7 @@ int sem_post(sem_t *sem) {
     printf("locking...\n");
 	lock();
     printf("done locking\n");
-	semaphore* sem_struct = *(sem->__align);
+	semaphore* sem_struct = &(sem->__align);
 	printf("semaphore value: %d\n", sem_struct->value);
 	sem_struct->value++;
     if (sem_struct->value == 1) {
