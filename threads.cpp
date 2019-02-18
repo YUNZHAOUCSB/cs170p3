@@ -262,7 +262,6 @@ pthread_t pthread_self(void) {
  * here, we should clean up thread (and exit if no more threads) 
  */
 void pthread_exit(void *value_ptr) {
-	printf("THREAD EXITING\n");
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
@@ -273,9 +272,7 @@ void pthread_exit(void *value_ptr) {
     lock();
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
-	printf("thread posting\n");
     sem_post(&(thread_pool.front()->sem_synch));
-	printf("thread done posting\n");
 	num_threads_exited++; //increment because thread has exited
     unlock();
 	//wait until exit code has been collected to clean this thread up
@@ -309,8 +306,6 @@ void pthread_exit(void *value_ptr) {
  */
 void signal_handler(int signo) {
 
-	printf("SIGNAL\n");
-
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -321,7 +316,6 @@ void signal_handler(int signo) {
 	   non-zero value. */
 	if(setjmp(thread_pool.front()->jb) == 0) {
 		/* switch threads */
-		printf("switching threads!\n");
 		// changed from original code
 		if (num_threads_exited == thread_pool.size()) {
 			//all threads have exited, none are blocked
@@ -461,9 +455,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
-	std::cout << "segfault!" << std::endl;
 	semaphore* sem_struct = (semaphore*) sem->__align;
-	std::cout << "sempahore struct: " << sem_struct->value << std::endl;
 }
 
 int sem_destroy(sem_t *sem) {
@@ -501,9 +493,7 @@ int sem_wait(sem_t *sem) {
 
 int sem_post(sem_t *sem) {
 	lock();
-    printf("done locking\n");
 	semaphore* sem_struct = (semaphore*) (sem->__align);
-	printf("semaphore value: %d\n", sem_struct->value);
 	sem_struct->value++;
     if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
