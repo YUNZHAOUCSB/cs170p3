@@ -25,7 +25,7 @@ void* thread(void* arg)
 
 int main()
 {
-    sem_init(&mutex, 0, 1);
+    sem_init(&mutex, 0, 0);
     pthread_t t1,t2;
     pthread_create(&t1,NULL,thread,NULL);
     sleep(2);
