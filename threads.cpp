@@ -513,7 +513,7 @@ int sem_post(sem_t *sem) {
 
 	while (!sem_struct->lock_stream.test_and_set());
 
-	if (sem_struct->wait_q.empty())
+	if (sem_struct->wait_q->empty())
 		sem_struct->value++;
 	else {
 		std::cout << sem_struct->wait_q->front()->id << std::endl;
