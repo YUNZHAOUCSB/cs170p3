@@ -489,7 +489,9 @@ int sem_wait(sem_t *sem) {
 	(sem_struct->wait_q)->push(thread_pool.front());
 	unlock();
 	sem_struct->lock_stream.test_and_set(); //sets lock_stream to TRUE, it was false initially
+	printf("semaphore is waiting...\n");
 	while (sem_struct->lock_stream.test_and_set());
+	printf("post received by waiting semaphore\n");
 	sem_struct->value--;
 	return 1;
 }
