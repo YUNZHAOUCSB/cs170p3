@@ -83,7 +83,7 @@ typedef struct {
     //for thread synchronization
     int status;
     void *return_value;
-    sem_t *sem_synch;
+    sem_t sem_synch;
 	//end change
 
 } tcb_t;
@@ -152,7 +152,7 @@ void init() {
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-    sem_init(main_tcb->sem_synch, 0, 1);
+    sem_init(&(main_tcb->sem_synch), 0, 1);
 	//end change
 
 	/* front of thread_pool is the active thread */
@@ -224,7 +224,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
     //changed from original code
     // set status to ready
     tmp_tcb->status = READY;
-    sem_init(tmp_tcb->sem_synch, 0, 1);
+    sem_init(&(tmp_tcb->sem_synch), 0, 1);
 	//end change
 
 	/* new thread is ready to be scheduled! */
@@ -456,7 +456,6 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 }
 
 int sem_init(sem_t *sem, int pshared, unsigned value) {
-	sem = (sem_t*)malloc(sizeof(sem_t));
     semaphore *temp;
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
