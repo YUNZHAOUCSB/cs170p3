@@ -307,7 +307,7 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
-
+	printf("SIGNAL\n");
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -425,7 +425,6 @@ void pthread_exit_wrapper (){
 }
 
 int pthread_join(pthread_t thread, void **value_ptr) {
-    printf("THREAD JOINING...\n");
     lock();
 
     //get thread from threadID if it is created
@@ -442,6 +441,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     sem_wait(&(temp->sem_synch));
 
 	std::cout << "thread return value: " << temp->return_value << std::endl;
+
     if (value_ptr != NULL)
         *value_ptr = temp->return_value;
 
@@ -449,7 +449,6 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     temp->status = READY;
 
     //return to the running thread's code
-    printf("THREAD JOINED\n");
     return 1;
 }
 
@@ -487,7 +486,7 @@ int sem_wait(sem_t *sem) {
 		unlock();
         return 1;
     }
-    else {
+    if (sem_struct->value == 0) {
 		thread_pool.front()->status = BLOCKED;
 		sem_struct->wait_q.push(thread_pool.front());
 		unlock();
