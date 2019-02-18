@@ -496,11 +496,11 @@ int sem_wait(sem_t *sem) {
 	//add process to queue
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
-
+	std::cout << sem_struct->wait_q->size() << std::endl;
+	
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
 
-	sem->__align = (long int) sem_struct;
 	//enable interrupts
 	unlock();
 
