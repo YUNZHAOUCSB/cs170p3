@@ -486,11 +486,6 @@ int sem_wait(sem_t *sem) {
 	//if value is >0 just enable interrupts and return
     if (sem_struct->value > 0) {
 		sem_struct->value--;
-
-		//add process to queue
-		thread_pool.front()->status = BLOCKED;
-		(sem_struct->wait_q)->push(thread_pool.front());
-
 		unlock();
         return 1;
     }
@@ -499,6 +494,7 @@ int sem_wait(sem_t *sem) {
 	//add process to queue
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
+	std::cout << "pushed thread: " << thread_pool.front()->id << " ,to queue." << std::endl;
 
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
