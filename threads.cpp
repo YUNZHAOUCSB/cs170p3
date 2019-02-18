@@ -458,7 +458,6 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
-	semaphore* sem_struct = (semaphore*) sem->__align;
 }
 
 int sem_destroy(sem_t *sem) {
@@ -487,10 +486,10 @@ int sem_wait(sem_t *sem) {
         return 1;
     }
     else {
-		printf("SEGFAULT\n");
 		thread_pool.front()->status = BLOCKED;
-		printf("SEGFAULT\n");
-		sem_struct->wait_q.push(thread_pool.front());
+		printf("semaphore val: %d\n", sem_struct->value);
+		(sem_struct->wait_q).push(thread_pool.front());
+
 		printf("SEGFAULT\n");
 		unlock();
 		while (!sem_struct->lock_stream.test_and_set());
