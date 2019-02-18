@@ -490,15 +490,15 @@ int sem_wait(sem_t *sem) {
 		//add process to queue
 		thread_pool.front()->status = BLOCKED;
 		(sem_struct->wait_q)->push(thread_pool.front());
-		
+
 		unlock();
         return 1;
     }
 	//else if value is zero, then need to wait
 
-	/*//add process to queue
+	//add process to queue
 	thread_pool.front()->status = BLOCKED;
-	(sem_struct->wait_q)->push(thread_pool.front());*/
+	(sem_struct->wait_q)->push(thread_pool.front());
 
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
