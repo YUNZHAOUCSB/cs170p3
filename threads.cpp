@@ -462,9 +462,9 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
-	cout << "segfault!" << endl;
+	std::cout << "segfault!" << std::endl;
 	semaphore* sem_struct = (semaphore*) sem->__align;
-	cout << "sempahore struct: " << sem_struct->value << endl;
+	std::cout << "sempahore struct: " << sem_struct->value << std::endl;
 }
 
 int sem_destroy(sem_t *sem) {
