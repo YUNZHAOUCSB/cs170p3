@@ -505,7 +505,7 @@ int sem_wait(sem_t *sem) {
 
 	//wait
 	printf("semaphore is waiting...\n");
-	while (!sem_struct->lock_stream.test_and_set());
+	while (sem_struct->lock_stream.test_and_set());
 	printf("post received by waiting semaphore\n");
 
 	//return
