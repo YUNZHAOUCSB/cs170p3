@@ -441,7 +441,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     //wait until the thread parameter has exited and its return value is stored
     sem_wait(&(temp->sem_synch));
 
-	std:cout << "thread return value: " << temp->return_value << std::endl;
+	std::cout << "thread return value: " << temp->return_value << std::endl;
     if (value_ptr != NULL)
         *value_ptr = temp->return_value;
 
