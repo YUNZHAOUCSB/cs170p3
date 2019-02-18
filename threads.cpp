@@ -513,6 +513,7 @@ int sem_wait(sem_t *sem) {
 }
 
 int sem_post(sem_t *sem) {
+	printf("semaphore posting...\n");
 	semaphore* sem_struct = (semaphore*) (sem->__align);
 
 	//disable interrupts
@@ -529,6 +530,7 @@ int sem_post(sem_t *sem) {
 		sem_struct->wait_q->pop();
         temp->status = READY;
 
+		printf("semaphore posting...\n");
 		//clear the semaphores lock stream
 		sem_struct->lock_stream.clear();
 
