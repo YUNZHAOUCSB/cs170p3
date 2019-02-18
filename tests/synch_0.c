@@ -5,13 +5,13 @@
 
 // A normal C function that is executed as a thread  
 // when its name is specified in pthread_create() 
-int *myThreadFun(void *vargp)
+void *myThreadFun(void *vargp)
 {
     sleep(1);
     printf("Printing GeeksQuiz from Thread \n");
     int *number;
     *number = 23;
-    return number;
+    return (void*) number;
 }
 
 int main() {
