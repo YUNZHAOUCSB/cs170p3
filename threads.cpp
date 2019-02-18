@@ -1,7 +1,8 @@
 /*
  * CS170 - Operating Systems
- * Project 2 Solution
- * Author: Evan Murray, 8954976
+ * Project 3 Solution Attempt
+ * Author of synchronization parts: Evan Murray, Perm# 8954976
+ * Author of original code: TA's of CS170
  */
 
 
@@ -408,7 +409,6 @@ int ptr_mangle(int p)
  * SYNCHRONIZATION FUNCTIONS
  */
 
-// lock and unlock functions
 void lock() {
     sigprocmask(SIG_BLOCK, &act.sa_mask, NULL);
 }
@@ -515,6 +515,23 @@ int sem_post(sem_t *sem) {
 	}
 	return 1;
 }
+
+/*
+ * I don't know why CLion shows an error for the copy queues, even though they work
+ *
+ * FINISHED: all within the threading library itself
+ * - test lock
+ * - test unlock
+ * - test sem_init
+ * - test sem_post
+ * - test sem_destroy
+ *
+ * TODO:
+ * - test all functions outside of threading library
+ * - test sem_wait
+ * - test pthread_join
+ * 
+ */
 
 
 
