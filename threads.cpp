@@ -476,14 +476,17 @@ int sem_destroy(sem_t *sem) {
 
 
 int sem_wait(sem_t *sem) {
-	semaphore* sem_struct = (semaphore*) sem->__align;
-
 	//disable interrupts
 	lock();
 
+	semaphore* sem_struct = (semaphore*) sem->__align;
+
+	while (!sem_struct->lock_stream.test_and_set());
+
 	//if value is >0 just enable interrupts and return
-    if (sem_struct->value > 1) {
+    if (sem_struct->value > 0) {
 		sem_struct->value--;
+		sem_struct->lock_stream.clear();
 		unlock();
         return 1;
     }
@@ -494,64 +497,38 @@ int sem_wait(sem_t *sem) {
 	(sem_struct->wait_q)->push(thread_pool.front());
 
 	//atomic function = TRUE
-	sem_struct->lock_stream.test_and_set();
+	sem_struct->lock_stream.clear();
 
 	//enable interrupts
 	unlock();
 
-	//wait
-	printf("semaphore is waiting...\n");
-	while (sem_struct->lock_stream.test_and_set());
-	printf("post received by waiting semaphore\n");
-	sem_struct->value--;
-
-	//return
-	return 1;
+	sem_wait(sem);
 }
 
 int sem_post(sem_t *sem) {
-	semaphore* sem_struct = (semaphore*) (sem->__align);
-
 	//disable interrupts
 	lock();
 
-	//increment value
-	sem_struct->value++;
+	semaphore* sem_struct = (semaphore*) (sem->__align);
 
-	//if value was zero, then unblock item from queue
-    if (sem_struct->value == 1) {
+	while (!sem_struct->lock_stream.test_and_set());
 
-		/*
-		 * TODO: segfault here
-		 * occurs when calling sem_post from a thread instead of main thread
-		 * for some reason the wait_q is empty...
-		 */
-
-		printf("semaphore posting1...\n");
-		//pop thread from front of wait q and set its status to ready
+	if (sem_struct->wait_q.empty())
+		sem_struct->value++;
+	else {
 		std::cout << sem_struct->wait_q->front()->id << std::endl;
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
-        temp->status = READY;
-		printf("semaphore posting2...\n");
-
-		//clear the semaphores lock stream
-		sem_struct->lock_stream.clear();
-
-		//value must remain at zero
-		sem_struct->value--;
-
-		//context switch --> Hoare semantics
-		unlock();
-
-		pause(); // should work as next thread will always occur before this one
-		// think about the correctness of this some more
-    }
-	else {
-		//value > 0 originally, just enable interrupts
-		unlock();
+		temp->status = READY;
 	}
-	return 1;
+	//clear the semaphores lock stream
+	sem_struct->lock_stream.clear();
+
+	//context switch --> Hoare semantics
+	unlock();
+
+	pause(); // should work as next thread will always occur before this one
+	// think about the correctness of this some more
 }
 
 /*
