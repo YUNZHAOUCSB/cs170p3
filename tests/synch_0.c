@@ -21,8 +21,9 @@ incer(void *arg)
 }
 
 
-int main(void)
+int main()
 {
+    printf("hello\n");
     int        ar[1000000];
     pthread_t  th1, th2;
     subarray   sb1, sb2;
