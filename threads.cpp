@@ -487,12 +487,13 @@ int sem_wait(sem_t *sem) {
         return 1;
     }
     else {
+		printf("SEGFAULT\n");
 		thread_pool.front()->status = BLOCKED;
+		printf("SEGFAULT\n");
 		sem_struct->wait_q.push(thread_pool.front());
 		printf("SEGFAULT\n");
 		unlock();
 		while (!sem_struct->lock_stream.test_and_set());
-		printf("SEGFAULT\n");
 		sem_struct->value--;
 		return 1;
 	}
