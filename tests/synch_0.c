@@ -5,18 +5,20 @@
 
 // A normal C function that is executed as a thread  
 // when its name is specified in pthread_create() 
-void *myThreadFun(void *vargp)
+int myThreadFun(void *vargp)
 {
     sleep(1);
     printf("Printing GeeksQuiz from Thread \n");
-    return NULL;
+    return 23;
 }
 
 int main() {
     pthread_t thread_id;
     printf("Before Thread\n");
     pthread_create(&thread_id, NULL, myThreadFun, NULL);
-    pthread_join(thread_id, NULL);
+    int join_num;
+    pthread_join(thread_id, &join_num);
+    printf("join num: %d", join_num);
     printf("After Thread\n");
     exit(0);
 }
