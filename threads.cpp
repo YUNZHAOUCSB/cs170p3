@@ -418,7 +418,6 @@ void unlock() {
 }
 
 void pthread_exit_wrapper (){
-	printf("IN WRAPPER\n");
     unsigned  int res;
     asm("movl %%eax ,  %0\n":"=r "(res));
     pthread_exit((void *)  res) ;

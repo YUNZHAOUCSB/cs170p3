@@ -9,9 +9,7 @@ void *myThreadFun(void *vargp)
 {
     sleep(1);
     printf("Printing GeeksQuiz from Thread \n");
-    int *number;
-    *number = 23;
-    return (void*) number;
+    return NULL;
 }
 
 int main() {
