@@ -9,14 +9,16 @@ int *myThreadFun(void *vargp)
 {
     sleep(1);
     printf("Printing GeeksQuiz from Thread \n");
-    return 23;
+    int *number;
+    *number = 23;
+    return number;
 }
 
 int main() {
     pthread_t thread_id;
     printf("Before Thread\n");
     pthread_create(&thread_id, NULL, myThreadFun, NULL);
-    pthread_join(thread_id);
+    pthread_join(thread_id, NULL);
     printf("After Thread\n");
     exit(0);
 }
