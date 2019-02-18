@@ -500,6 +500,7 @@ int sem_wait(sem_t *sem) {
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
 
+	sem->__align = (long int) sem_struct;
 	//enable interrupts
 	unlock();
 
