@@ -150,7 +150,7 @@ void init() {
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-    sem_init(&(main_tcb->sem_synch), 0, 0);
+    sem_init(&(main_tcb->sem_synch), 0, 1);
 	//end change
 
 	/* front of thread_pool is the active thread */
@@ -222,7 +222,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
     //changed from original code
     // set status to ready
     tmp_tcb->status = READY;
-    sem_init(&(tmp_tcb->sem_synch), 0, 0);
+    sem_init(&(tmp_tcb->sem_synch), 0, 1);
 	//end change
 
 	/* new thread is ready to be scheduled! */
