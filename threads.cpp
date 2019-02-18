@@ -261,6 +261,7 @@ pthread_t pthread_self(void) {
  * here, we should clean up thread (and exit if no more threads) 
  */
 void pthread_exit(void *value_ptr) {
+	printf("Thread Exiting.\n");
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
@@ -271,6 +272,7 @@ void pthread_exit(void *value_ptr) {
     lock();
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
+	printf("Signaling semaphore...\n");
     sem_post(&(thread_pool.front()->sem_synch));
 	num_threads_exited++; //increment because thread has exited
     unlock();
@@ -435,6 +437,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
+	printf("Waiting on semaphore...\n");
     sem_wait(&(temp->sem_synch));
 
 	//std::cout << "thread return value: " << temp->return_value << std::endl;
@@ -485,14 +488,11 @@ int sem_wait(sem_t *sem) {
     }
     else {
 		thread_pool.front()->status = BLOCKED;
-
-		std::cout << sem_struct->wait_q->size() << std::endl;
-		//TODO: Segfaults when trying to push tcb here
 		(sem_struct->wait_q)->push(thread_pool.front());
-		printf("SEGFAULT\n");
-
 		unlock();
+		printf("Calling wait...\n");
 		while (!sem_struct->lock_stream.test_and_set());
+		printf("Returned from wait!\n");
 		sem_struct->value--;
 		return 1;
 	}
