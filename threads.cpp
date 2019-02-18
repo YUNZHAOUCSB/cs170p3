@@ -231,6 +231,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
 
+    printf("THREAD CREATED\n");
     /* resume timer */
     RESUME_TIMER;
 
@@ -424,7 +425,7 @@ void pthread_exit_wrapper (){
 }
 
 int pthread_join(pthread_t thread, void **value_ptr) {
-
+    printf("THREAD JOINING...\n");
     lock();
 
     //get thread from threadID if it is created
@@ -447,6 +448,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     temp->status = READY;
 
     //return to the running thread's code
+    printf("THREAD JOINED\n");
     return 1;
 }
 
