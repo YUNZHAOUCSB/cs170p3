@@ -486,16 +486,15 @@ int sem_wait(sem_t *sem) {
 		unlock();
         return 1;
     }
-    else {
-		thread_pool.front()->status = BLOCKED;
-		(sem_struct->wait_q)->push(thread_pool.front());
-		unlock();
-		printf("Calling wait...\n");
-		while (sem_struct->lock_stream.test_and_set());
-		printf("Returned from wait!\n");
-		sem_struct->value--;
-		return 1;
-	}
+	thread_pool.front()->status = BLOCKED;
+	(sem_struct->wait_q)->push(thread_pool.front());
+	unlock();
+	printf("Calling wait...\n");
+	sem_struct->lock_stream = 1;
+	while (sem_struct->lock_stream.test_and_set());
+	printf("Returned from wait!\n");
+	sem_struct->value--;
+	return 1;
 }
 
 int sem_post(sem_t *sem) {
