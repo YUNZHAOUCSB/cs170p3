@@ -438,8 +438,9 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
+	printf("SEGFAULT\n");
     sem_wait(&(temp->sem_synch));
-
+	printf("SEGFAULT\n");
 	std::cout << "thread return value: " << temp->return_value << std::endl;
 
     if (value_ptr != NULL)
