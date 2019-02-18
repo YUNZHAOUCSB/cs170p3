@@ -461,7 +461,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
-    sem->__align = (long int)&temp;
+    sem->__align = (long int)temp;
 }
 
 int sem_destroy(sem_t *sem) {
