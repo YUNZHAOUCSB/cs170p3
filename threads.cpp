@@ -478,6 +478,7 @@ int sem_destroy(sem_t *sem) {
 
 
 int sem_wait(sem_t *sem) {
+	semaphore* sem_struct = (semaphore*) sem->__align;
 
 	//disable interrupts
 	lock();
@@ -486,7 +487,6 @@ int sem_wait(sem_t *sem) {
 	sem_struct->value--;
 
 	//if value is >0 just enable interrupts and return
-	semaphore* sem_struct = (semaphore*) sem->__align;
     if (sem_struct->value > 0) {
 		unlock();
         return 1;
@@ -513,6 +513,8 @@ int sem_wait(sem_t *sem) {
 }
 
 int sem_post(sem_t *sem) {
+	semaphore* sem_struct = (semaphore*) (sem->__align);
+	
 	//disable interrupts
 	lock();
 
@@ -520,7 +522,6 @@ int sem_post(sem_t *sem) {
 	sem_struct->value++;
 
 	//if value was zero, then unblock item from queue
-	semaphore* sem_struct = (semaphore*) (sem->__align);
     if (sem_struct->value == 1) {
 
 		//pop thread from front of wait q and set its status to ready
@@ -536,7 +537,7 @@ int sem_post(sem_t *sem) {
 
 		//context switch --> Hoare semantics
 		unlock();
-		
+
 		pause(); // should work as next thread will always occur before this one
 		// think about the correctness of this some more
     }
