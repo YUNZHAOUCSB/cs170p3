@@ -526,6 +526,7 @@ int sem_post(sem_t *sem) {
     if (sem_struct->value == 1) {
 		printf("semaphore posting2...\n");
 		//pop thread from front of wait q and set its status to ready
+		std::cout << sem_struct->wait_q->size() << std::endl;
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
