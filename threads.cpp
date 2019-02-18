@@ -150,7 +150,7 @@ void init() {
     //changed from original code
     // set status to ready
     main_tcb->status = READY;
-    sem_init(&(main_tcb->sem_synch), 0, 1);
+    sem_init(&(main_tcb->sem_synch), 0, 0);
 	//end change
 
 	/* front of thread_pool is the active thread */
@@ -222,12 +222,13 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
     //changed from original code
     // set status to ready
     tmp_tcb->status = READY;
-    sem_init(&(tmp_tcb->sem_synch), 0, 1);
+    sem_init(&(tmp_tcb->sem_synch), 0, 0);
 	//end change
 
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
 
+    printf("THREAD CREATED\n");
     /* resume timer */
     RESUME_TIMER;
 
@@ -305,6 +306,7 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
+	printf("SIGNAL\n");
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -476,17 +478,14 @@ int sem_destroy(sem_t *sem) {
 
 
 int sem_wait(sem_t *sem) {
-	//disable interrupts
-	lock();
-
 	semaphore* sem_struct = (semaphore*) sem->__align;
 
-	while (!sem_struct->lock_stream.test_and_set());
-
+	//disable interrupts
+	lock();
+	
 	//if value is >0 just enable interrupts and return
     if (sem_struct->value > 0) {
 		sem_struct->value--;
-		sem_struct->lock_stream.clear();
 		unlock();
         return 1;
     }
@@ -497,38 +496,63 @@ int sem_wait(sem_t *sem) {
 	(sem_struct->wait_q)->push(thread_pool.front());
 
 	//atomic function = TRUE
-	sem_struct->lock_stream.clear();
+	sem_struct->lock_stream.test_and_set();
 
 	//enable interrupts
 	unlock();
 
-	sem_wait(sem);
+	//wait
+	printf("semaphore is waiting...\n");
+	while (sem_struct->lock_stream.test_and_set());
+	printf("post received by waiting semaphore\n");
+
+	//return
+	return 1;
 }
 
 int sem_post(sem_t *sem) {
+	semaphore* sem_struct = (semaphore*) (sem->__align);
+
 	//disable interrupts
 	lock();
 
-	semaphore* sem_struct = (semaphore*) (sem->__align);
+	//increment value
+	sem_struct->value++;
 
-	while (!sem_struct->lock_stream.test_and_set());
+	//if value was zero, then unblock item from queue
+    if (sem_struct->value == 1) {
 
-	if (sem_struct->wait_q->empty())
-		sem_struct->value++;
-	else {
+		/*
+		 * TODO: segfault here
+		 * occurs when calling sem_post from a thread instead of main thread
+		 * for some reason the wait_q is empty...
+		 */
+
+		printf("semaphore posting1...\n");
+		//pop thread from front of wait q and set its status to ready
 		std::cout << sem_struct->wait_q->front()->id << std::endl;
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
-		temp->status = READY;
+        temp->status = READY;
+		printf("semaphore posting2...\n");
+
+		//clear the semaphores lock stream
+		sem_struct->lock_stream.clear();
+
+		//value must remain at zero
+		sem_struct->value--;
+
+		//context switch --> Hoare semantics
+		unlock();
+
+		pause(); // should work as next thread will always occur before this one
+		// think about the correctness of this some more
+    }
+	else {
+		//value > 0 originally, just enable interrupts
+		unlock();
 	}
-	//clear the semaphores lock stream
-	sem_struct->lock_stream.clear();
-
-	//context switch --> Hoare semantics
-	unlock();
-
-	pause(); // should work as next thread will always occur before this one
-	// think about the correctness of this some more
+	return 1;
 }
 
 /*
