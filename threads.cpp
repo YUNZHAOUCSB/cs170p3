@@ -498,7 +498,7 @@ int sem_wait(sem_t *sem) {
 	(sem_struct->wait_q)->push(thread_pool.front());
 
 	//atomic function = TRUE
-	sem_struct->lock_stream.test_and_set;
+	sem_struct->lock_stream.test_and_set();
 
 	//enable interrupts
 	unlock();
@@ -514,7 +514,7 @@ int sem_wait(sem_t *sem) {
 
 int sem_post(sem_t *sem) {
 	semaphore* sem_struct = (semaphore*) (sem->__align);
-	
+
 	//disable interrupts
 	lock();
 
