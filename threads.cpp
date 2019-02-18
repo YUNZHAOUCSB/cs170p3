@@ -482,7 +482,7 @@ int sem_wait(sem_t *sem) {
 
 	//disable interrupts
 	lock();
-	
+
 	//if value is >0 just enable interrupts and return
     if (sem_struct->value > 0) {
 		sem_struct->value--;
@@ -505,6 +505,7 @@ int sem_wait(sem_t *sem) {
 	printf("semaphore is waiting...\n");
 	while (sem_struct->lock_stream.test_and_set());
 	printf("post received by waiting semaphore\n");
+	std::cout << sem_struct->value << std::endl;
 
 	//return
 	return 1;
@@ -529,8 +530,8 @@ int sem_post(sem_t *sem) {
 		 */
 
 		printf("semaphore posting1...\n");
+
 		//pop thread from front of wait q and set its status to ready
-		std::cout << sem_struct->wait_q->front()->id << std::endl;
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
