@@ -35,15 +35,12 @@ void lock();
 void unlock();
 void pthread_exit_wrapper();
 
-
-
 /* 
  *Timer globals 
  */
 static struct timeval tv1,tv2;
 static struct itimerval interval_timer = {0}, current_timer = {0}, zero_timer = {0};
 static struct sigaction act;
-
 
 
 /*
@@ -94,7 +91,7 @@ typedef struct {
  */
 typedef struct {
     int value;
-    std::queue<tcb_t*> wait_q;
+    std::queue<tcb_t*> *wait_q;
     bool init = false;
     std::atomic_flag lock_stream = ATOMIC_FLAG_INIT;
 } semaphore;
@@ -457,6 +454,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
+    temp->wait_q = new std::queue<tcb*>;
     sem->__align = (long int)temp;
 }
 
