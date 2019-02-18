@@ -484,10 +484,10 @@ int sem_wait(sem_t *sem) {
 	lock();
 
 	//decrement value
-	sem_struct->value--;
 
 	//if value is >0 just enable interrupts and return
     if (sem_struct->value > 0) {
+		sem_struct->value--;
 		unlock();
         return 1;
     }
