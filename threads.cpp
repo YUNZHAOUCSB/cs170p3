@@ -225,6 +225,7 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
     // set status to ready
     tmp_tcb->status = READY;
     sem_init(tmp_tcb->sem_synch, 0, 1);
+	std::cout << "temp semaphore struct: " << tmp_tcb->sem_synch->__align << std::endl;
 	//end change
 
 	/* new thread is ready to be scheduled! */
@@ -274,7 +275,6 @@ void pthread_exit(void *value_ptr) {
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
 	printf("thread posting\n");
-	std::cout << "sem_struct: " << thread_pool.front()->sem_synch->__align << std::endl;
     sem_post(thread_pool.front()->sem_synch);
 	printf("thread done posting\n");
 	num_threads_exited++; //increment because thread has exited
@@ -462,8 +462,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
-    sem->__align = (long int)&temp;
-	std::cout << "sem_struct: " << sem->__align << std::endl;
+    sem->__align = (long int)temp;
 }
 
 int sem_destroy(sem_t *sem) {
