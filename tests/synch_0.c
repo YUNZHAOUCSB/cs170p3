@@ -1,3 +1,9 @@
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
 typedef struct {
     int *ar;
     long n;
