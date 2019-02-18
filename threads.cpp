@@ -487,8 +487,8 @@ int sem_wait(sem_t *sem) {
     }
     else {
 		thread_pool.front()->status = BLOCKED;
-		
-		cout << sem_struct->wait_q.size() << endl;
+
+		std::cout << sem_struct->wait_q.size() << std::endl;
 		//TODO: Segfaults when trying to push tcb here
 		(sem_struct->wait_q).push(thread_pool.front());
 		printf("SEGFAULT\n");
