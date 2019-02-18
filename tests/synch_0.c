@@ -1,45 +1,22 @@
-#include <pthread.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>  //Header file for sleep(). man 3 sleep for details. 
+#include <pthread.h>
 
-
-typedef struct {
-    int *ar;
-    long n;
-} subarray;
-
-
-void *
-incer(void *arg)
+// A normal C function that is executed as a thread  
+// when its name is specified in pthread_create() 
+void *myThreadFun(void *vargp)
 {
-    long i;
-
-
-    for (i = 0; i < ((subarray *)arg)->n; i++)
-        ((subarray *)arg)->ar[i]++;
+    sleep(1);
+    printf("Printing GeeksQuiz from Thread \n");
+    return NULL;
 }
 
-
-int main()
-{
-    printf("hello\n");
-    int        ar[1000000];
-    pthread_t  th1, th2;
-    subarray   sb1, sb2;
-
-
-    sb1.ar = &ar[0];
-    sb1.n  = 500000;
-    (void) pthread_create(&th1, NULL, incer, &sb1);
-
-
-    sb2.ar = &ar[500000];
-    sb2.n  = 500000;
-    (void) pthread_create(&th2, NULL, incer, &sb2);
-
-
-    (void) pthread_join(th1, NULL);
-    (void) pthread_join(th2, NULL);
-    return 0;
+int main() {
+    pthread_t thread_id;
+    printf("Before Thread\n");
+    pthread_create(&thread_id, NULL, myThreadFun, NULL);
+    pthread_join(thread_id, NULL);
+    printf("After Thread\n");
+    exit(0);
 }
