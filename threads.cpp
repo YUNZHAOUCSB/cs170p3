@@ -462,7 +462,9 @@ int sem_destroy(sem_t *sem) {
 	semaphore *sem_struct = (semaphore*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
+		printf("freeing sem struct\n");
         free(sem_struct);
+		printf("freeing semaphore\n");
         free(sem);
         return 1; // 1 is successful
     }
