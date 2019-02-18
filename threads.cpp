@@ -426,6 +426,7 @@ void pthread_exit_wrapper (){
 int pthread_join(pthread_t thread, void **value_ptr) {
     lock();
 
+	std::cout << "joining..." << std::endl;
     //get thread from threadID if it is created
 	std::queue<tcb_t*> thread_pool_copy = thread_pool;
 	tcb_t *temp = thread_pool_copy.front();
@@ -495,6 +496,8 @@ int sem_wait(sem_t *sem) {
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
 	std::cout << "pushed thread: " << thread_pool.front()->id << " ,to queue." << std::endl;
+
+	//TODO: thread id not working??
 
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
