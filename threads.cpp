@@ -462,6 +462,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
+	std::cout << "sem_struct: " << sem->__align << std::endl;
 }
 
 int sem_destroy(sem_t *sem) {
