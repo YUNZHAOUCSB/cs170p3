@@ -478,42 +478,70 @@ int sem_destroy(sem_t *sem) {
 
 
 int sem_wait(sem_t *sem) {
+
+	//disable interrupts
 	lock();
+
+	//decrement value
+	sem_struct->value--;
+
+	//if value is >0 just enable interrupts and return
 	semaphore* sem_struct = (semaphore*) sem->__align;
     if (sem_struct->value > 0) {
-        sem_struct->value--;
 		unlock();
         return 1;
     }
+	//else if value is zero, then need to wait
+
+	//add process to queue
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
+
+	//atomic function = TRUE
+	sem_struct->lock_stream.test_and_set;
+
+	//enable interrupts
 	unlock();
-	sem_struct->lock_stream.test_and_set(); //sets lock_stream to TRUE, it was false initially
+
+	//wait
 	printf("semaphore is waiting...\n");
-	while (sem_struct->lock_stream.test_and_set());
+	while (!sem_struct->lock_stream.test_and_set());
 	printf("post received by waiting semaphore\n");
-	sem_struct->value--;
+
+	//return
 	return 1;
 }
 
 int sem_post(sem_t *sem) {
+	//disable interrupts
 	lock();
-	semaphore* sem_struct = (semaphore*) (sem->__align);
+
+	//increment value
 	sem_struct->value++;
+
+	//if value was zero, then unblock item from queue
+	semaphore* sem_struct = (semaphore*) (sem->__align);
     if (sem_struct->value == 1) {
+
 		//pop thread from front of wait q and set its status to ready
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
+
 		//clear the semaphores lock stream
 		sem_struct->lock_stream.clear();
+
+		//value must remain at zero
 		sem_struct->value--;
+
 		//context switch --> Hoare semantics
 		unlock();
+		
 		pause(); // should work as next thread will always occur before this one
 		// think about the correctness of this some more
     }
 	else {
+		//value > 0 originally, just enable interrupts
 		unlock();
 	}
 	return 1;
