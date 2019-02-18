@@ -496,8 +496,8 @@ int sem_wait(sem_t *sem) {
 	//add process to queue
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
-	std::cout << sem_struct->wait_q->size() << std::endl;
-	
+	std::cout << sem_struct->wait_q->front()->id << std::endl;
+
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
 
@@ -527,7 +527,7 @@ int sem_post(sem_t *sem) {
     if (sem_struct->value == 1) {
 		printf("semaphore posting2...\n");
 		//pop thread from front of wait q and set its status to ready
-		std::cout << sem_struct->wait_q->size() << std::endl;
+		std::cout << sem_struct->wait_q->front()->id << std::endl;
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
