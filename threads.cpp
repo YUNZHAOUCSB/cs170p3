@@ -487,10 +487,12 @@ int sem_wait(sem_t *sem) {
     }
     else {
 		thread_pool.front()->status = BLOCKED;
-		printf("semaphore val: %d\n", sem_struct->value);
+		
+		cout << sem_struct->wait_q.size() << endl;
+		//TODO: Segfaults when trying to push tcb here
 		(sem_struct->wait_q).push(thread_pool.front());
-
 		printf("SEGFAULT\n");
+
 		unlock();
 		while (!sem_struct->lock_stream.test_and_set());
 		sem_struct->value--;
