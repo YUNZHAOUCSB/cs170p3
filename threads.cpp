@@ -224,8 +224,8 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
     //changed from original code
     // set status to ready
     tmp_tcb->status = READY;
-    sem_init(&(tmp_tcb->sem_synch), 0, 1);
-	std::cout << "temp semaphore struct: " << tmp_tcb->sem_synch->__align << std::endl;
+    sem_init(tmp_tcb->sem_synch, 0, 1);
+	//std::cout << "temp semaphore struct: " << tmp_tcb->sem_synch->__align << std::endl;
 	//end change
 
 	/* new thread is ready to be scheduled! */
@@ -457,9 +457,9 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 }
 
 int sem_init(sem_t *sem, int pshared, unsigned value) {
-	sem = (sem_t*)malloc(sizeof(sem_t));
+	sem = (sem_t*)malloc(sizeof(sem_t*));
     semaphore *temp;
-	temp = (semaphore*)malloc(sizeof(semaphore));
+	temp = (semaphore*)malloc(sizeof(semaphore*));
     temp->value = value;
     temp->init = true;
     sem->__align = (long int)temp;
