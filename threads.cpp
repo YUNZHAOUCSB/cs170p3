@@ -440,7 +440,8 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     //wait until the thread parameter has exited and its return value is stored
     sem_wait(&(temp->sem_synch));
 
-    *value_ptr = temp->return_value;
+    if (value_ptr != NULL)
+        *value_ptr = temp->return_value;
 
     //change status to ready so pthread_exit can now clean it up
     temp->status = READY;
@@ -530,7 +531,7 @@ int sem_post(sem_t *sem) {
  * - test all functions outside of threading library
  * - test sem_wait
  * - test pthread_join
- * 
+ *
  */
 
 
