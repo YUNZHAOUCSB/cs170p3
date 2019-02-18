@@ -513,7 +513,7 @@ int sem_wait(sem_t *sem) {
 }
 
 int sem_post(sem_t *sem) {
-	printf("semaphore posting...\n");
+	printf("semaphore posting1...\n");
 	semaphore* sem_struct = (semaphore*) (sem->__align);
 
 	//disable interrupts
@@ -524,13 +524,13 @@ int sem_post(sem_t *sem) {
 
 	//if value was zero, then unblock item from queue
     if (sem_struct->value == 1) {
-
+		printf("semaphore posting2...\n");
 		//pop thread from front of wait q and set its status to ready
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
 
-		printf("semaphore posting...\n");
+		printf("semaphore posting3...\n");
 		//clear the semaphores lock stream
 		sem_struct->lock_stream.clear();
 
