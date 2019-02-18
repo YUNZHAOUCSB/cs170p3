@@ -438,10 +438,9 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
-	printf("SEGFAULT\n");
     sem_wait(&(temp->sem_synch));
-	printf("SEGFAULT\n");
-	std::cout << "thread return value: " << temp->return_value << std::endl;
+
+	//std::cout << "thread return value: " << temp->return_value << std::endl;
 
     if (value_ptr != NULL)
         *value_ptr = temp->return_value;
@@ -490,8 +489,10 @@ int sem_wait(sem_t *sem) {
     else {
 		thread_pool.front()->status = BLOCKED;
 		sem_struct->wait_q.push(thread_pool.front());
+		printf("SEGFAULT\n");
 		unlock();
 		while (!sem_struct->lock_stream.test_and_set());
+		printf("SEGFAULT\n");
 		sem_struct->value--;
 		return 1;
 	}
