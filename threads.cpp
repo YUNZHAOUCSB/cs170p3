@@ -454,7 +454,7 @@ int sem_init(sem_t *sem, int pshared, unsigned value) {
 	temp = (semaphore*)malloc(sizeof(semaphore));
     temp->value = value;
     temp->init = true;
-    temp->wait_q = new std::queue<tcb*>;
+    temp->wait_q = new std::queue<tcb_t*>;
     sem->__align = (long int)temp;
 }
 
@@ -486,9 +486,9 @@ int sem_wait(sem_t *sem) {
     else {
 		thread_pool.front()->status = BLOCKED;
 
-		std::cout << sem_struct->wait_q.size() << std::endl;
+		std::cout << sem_struct->wait_q->size() << std::endl;
 		//TODO: Segfaults when trying to push tcb here
-		(sem_struct->wait_q).push(thread_pool.front());
+		(sem_struct->wait_q)->push(thread_pool.front());
 		printf("SEGFAULT\n");
 
 		unlock();
@@ -504,8 +504,8 @@ int sem_post(sem_t *sem) {
 	sem_struct->value++;
     if (sem_struct->value == 1) {
 		//pop thread from front of wait q and set its status to ready
-		tcb_t *temp = sem_struct->wait_q.front();
-		sem_struct->wait_q.pop();
+		tcb_t *temp = sem_struct->wait_q->front();
+		sem_struct->wait_q->pop();
         temp->status = READY;
 		//clear the semaphores lock stream
 		sem_struct->lock_stream.clear();
