@@ -274,7 +274,7 @@ void pthread_exit(void *value_ptr) {
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
 	printf("thread posting\n");
-    sem_post(thread_pool.front()->sem_synch);
+    sem_post(&(thread_pool.front()->sem_synch));
 	printf("thread done posting\n");
 	num_threads_exited++; //increment because thread has exited
     unlock();
@@ -364,7 +364,7 @@ void the_nowhere_zone(void) {
 
 	//changed from original code
     //free the semaphore
-    sem_destroy(thread_pool.front()->sem_synch);
+    sem_destroy(&(thread_pool.front()->sem_synch));
 	//decrement because thread will no longer be apart of queue
 	num_threads_exited--;
 	//end change
@@ -444,7 +444,7 @@ int pthread_join(pthread_t thread, void **value_ptr) {
     unlock();
 
     //wait until the thread parameter has exited and its return value is stored
-    sem_wait(temp->sem_synch);
+    sem_wait(&(temp->sem_synch));
 
     *value_ptr = temp->return_value;
 
