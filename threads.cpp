@@ -315,7 +315,6 @@ void signal_handler(int signo) {
 	   on direct invocation, setjmp returns 0. if jumped to from longjmp, returns
 	   non-zero value. */
 	if(setjmp(thread_pool.front()->jb) == 0) {
-		printf("am here\n");
 		/* switch threads */
 		// changed from original code
 		if (num_threads_exited == thread_pool.size()) {
@@ -329,6 +328,8 @@ void signal_handler(int signo) {
 			}
 			num_threads_exited = -1;
 		}
+
+		printf("am here\n");
         //if thread is blocked then find next thread that isn't blocked or exited
         do {
             thread_pool.push(thread_pool.front());
