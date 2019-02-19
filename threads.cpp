@@ -264,7 +264,7 @@ void pthread_exit(void *value_ptr) {
 	if(has_initialized == 0) {
 		exit(0);
 	}
-
+	printf("made it here\n");
 	//changed from original code
     //Does this collect pointer right?
     lock();
