@@ -525,7 +525,7 @@ int sem_post(sem_t *sem) {
 	sem_struct->value++;
 
 	//if value was zero, then unblock item from queue
-    if (sem_struct->value == 1 && !(sem_struct->wait_q.empty())) {
+    if (sem_struct->value == 1 && !(sem_struct->wait_q->empty())) {
 
 		/*
 		 * TODO: segfault here
