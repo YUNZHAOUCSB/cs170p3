@@ -264,19 +264,20 @@ void pthread_exit(void *value_ptr) {
 	if(has_initialized == 0) {
 		exit(0);
 	}
-	printf("made it here\n");
+
 	//changed from original code
     //Does this collect pointer right?
     lock();
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: test if this is right
+	printf("made it here\n");
     sem_post(&(thread_pool.front()->sem_synch));
+	printf("made it here\n");
 	num_threads_exited++; //increment because thread has exited
     unlock();
 	//wait until exit code has been collected to clean this thread up
     pause();
 	//end change
-	printf("made it here\n");
 
     STOP_TIMER;
 	if(thread_pool.front()->id == 0) {
