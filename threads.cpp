@@ -269,7 +269,7 @@ void pthread_exit(void *value_ptr) {
     //Does this collect pointer right?
     lock();
     thread_pool.front()->status = EXITED;
-    thread_pool.front()->return_value = value_ptr; //TODO: is this right?
+    thread_pool.front()->return_value = value_ptr; //TODO: test if this is right
     sem_post(&(thread_pool.front()->sem_synch));
 	num_threads_exited++; //increment because thread has exited
     unlock();
@@ -354,6 +354,7 @@ void the_nowhere_zone(void) {
 	thread_pool.front()->stack = NULL;
 
 	//changed from original code
+	//TODO: is tcb_t pointer cleaned up right?
     //free the semaphore
     sem_destroy(&(thread_pool.front()->sem_synch));
 	//decrement because thread will no longer be apart of queue
@@ -460,6 +461,7 @@ int sem_destroy(sem_t *sem) {
 	semaphore *sem_struct = (semaphore*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
+		free(sem_struct->wait_q);
         free(sem_struct);
         //free(sem);
         return 1; // 1 is successful
@@ -512,6 +514,7 @@ int sem_post(sem_t *sem) {
 	sem_struct->value++;
 
 	//if value was zero, then unblock item from queue
+	//also have to check if queue is not empty
     if (sem_struct->value == 1 && !(sem_struct->wait_q->empty())) {
 
 		//pop thread from front of wait q and set its status to ready
@@ -541,17 +544,16 @@ int sem_post(sem_t *sem) {
 /*
  * I don't know why CLion shows an error for the copy queues, even though they work
  *
- * FINISHED: all within the threading library itself
- * - test lock
- * - test unlock
- * - test sem_init
- * - test sem_post
- * - test sem_destroy
+ * Tests:
+ * - passed these test cases!!:
+ * 		-synch_0
+ * 		-synch_1
+ *
  *
  * TODO:
- * - test all functions outside of threading library
- * - test sem_wait
- * - test pthread_join
+ * - test pthread_join within a thread that is not the main
+ * - !!!test return value passing correctly when thread exits!!!   <-- find a test case for this
+ * - test many threads and semaphores at once
  *
  */
 
