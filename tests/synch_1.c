@@ -10,7 +10,7 @@ sem_t mutex;
 void* thread(void* arg)
 {
     //wait
-    sem_wait(&mutex);
+    //sem_wait(&mutex);
     printf("\nEntered..\n");
 
     //critical section
@@ -19,13 +19,13 @@ void* thread(void* arg)
 
     //signal
     printf("\nJust Exiting...\n");
-    sem_post(&mutex);
+    //sem_post(&mutex);
 }
 
 
 int main()
 {
-    sem_init(&mutex, 0, 1);
+    //sem_init(&mutex, 0, 1);
     pthread_t t1,t2;
     pthread_create(&t1,NULL,thread,NULL);
     sleep(2);
