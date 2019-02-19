@@ -276,6 +276,7 @@ void pthread_exit(void *value_ptr) {
 	//wait until exit code has been collected to clean this thread up
     pause();
 	//end change
+	printf("made it here\n");
 
     STOP_TIMER;
 	if(thread_pool.front()->id == 0) {
