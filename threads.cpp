@@ -335,7 +335,7 @@ void signal_handler(int signo) {
         } while (thread_pool.front()->status == BLOCKED || thread_pool.front()->status == EXITED);
 		//end change
 
-		printf("am here\n");
+		printf("threadID: %d\n", thread_pool.front()->id);
 		/* resume scheduler and GOOOOOOOOOO */
 		longjmp(thread_pool.front()->jb,1);
 	}
