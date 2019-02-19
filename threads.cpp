@@ -328,8 +328,6 @@ void signal_handler(int signo) {
 			}
 			num_threads_exited = -1;
 		}
-
-		printf("am here\n");
         //if thread is blocked then find next thread that isn't blocked or exited
         do {
             thread_pool.push(thread_pool.front());
@@ -337,6 +335,7 @@ void signal_handler(int signo) {
         } while (thread_pool.front()->status == BLOCKED || thread_pool.front()->status == EXITED);
 		//end change
 
+		printf("am here\n");
 		/* resume scheduler and GOOOOOOOOOO */
 		longjmp(thread_pool.front()->jb,1);
 	}
