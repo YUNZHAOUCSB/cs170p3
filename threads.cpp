@@ -306,7 +306,6 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
-	printf("SIGNAL\n");
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -426,7 +425,6 @@ void pthread_exit_wrapper (){
 int pthread_join(pthread_t thread, void **value_ptr) {
     lock();
 
-	std::cout << "joining..." << std::endl;
     //get thread from threadID if it is created
 	std::queue<tcb_t*> thread_pool_copy = thread_pool;
 	tcb_t *temp = thread_pool_copy.front();
@@ -495,9 +493,6 @@ int sem_wait(sem_t *sem) {
 	//add process to queue
 	thread_pool.front()->status = BLOCKED;
 	(sem_struct->wait_q)->push(thread_pool.front());
-	std::cout << "pushed thread: " << thread_pool.front()->id << " ,to queue." << std::endl;
-
-	//TODO: thread id not working??
 
 	//atomic function = TRUE
 	sem_struct->lock_stream.test_and_set();
@@ -506,10 +501,7 @@ int sem_wait(sem_t *sem) {
 	unlock();
 
 	//wait
-	printf("semaphore is waiting...\n");
 	while (sem_struct->lock_stream.test_and_set());
-	printf("post received by waiting semaphore\n");
-	std::cout << sem_struct->value << std::endl;
 
 	//return
 	return 1;
@@ -527,19 +519,10 @@ int sem_post(sem_t *sem) {
 	//if value was zero, then unblock item from queue
     if (sem_struct->value == 1 && !(sem_struct->wait_q->empty())) {
 
-		/*
-		 * TODO: segfault here
-		 * occurs when calling sem_post from a thread instead of main thread
-		 * for some reason the wait_q is empty...
-		 */
-
-		printf("semaphore posting1...\n");
-
 		//pop thread from front of wait q and set its status to ready
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
         temp->status = READY;
-		printf("semaphore posting2...\n");
 
 		//clear the semaphores lock stream
 		sem_struct->lock_stream.clear();
