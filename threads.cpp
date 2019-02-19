@@ -228,7 +228,6 @@ int pthread_create(pthread_t *restrict_thread, const pthread_attr_t *restrict_at
 	/* new thread is ready to be scheduled! */
 	thread_pool.push(tmp_tcb);
 
-    printf("THREAD CREATED\n");
     /* resume timer */
     RESUME_TIMER;
 
@@ -261,7 +260,6 @@ pthread_t pthread_self(void) {
  * here, we should clean up thread (and exit if no more threads) 
  */
 void pthread_exit(void *value_ptr) {
-	printf("Thread Exiting.\n");
 	/* just exit if not yet initialized */
 	if(has_initialized == 0) {
 		exit(0);
@@ -272,7 +270,6 @@ void pthread_exit(void *value_ptr) {
     lock();
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: is this right?
-	printf("Signaling semaphore...\n");
     sem_post(&(thread_pool.front()->sem_synch));
 	num_threads_exited++; //increment because thread has exited
     unlock();
@@ -463,9 +460,7 @@ int sem_destroy(sem_t *sem) {
 	semaphore *sem_struct = (semaphore*) sem->__align;
     if (sem_struct->init) {
         //free(sem_struct->init->wait_q);
-		//printf("freeing sem struct\n");
         free(sem_struct);
-		//printf("freeing semaphore\n");
         //free(sem);
         return 1; // 1 is successful
     }
