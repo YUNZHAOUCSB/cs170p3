@@ -270,9 +270,7 @@ void pthread_exit(void *value_ptr) {
     lock();
     thread_pool.front()->status = EXITED;
     thread_pool.front()->return_value = value_ptr; //TODO: test if this is right
-	printf("made it here\n");
     sem_post(&(thread_pool.front()->sem_synch));
-	printf("made it here\n");
 	num_threads_exited++; //increment because thread has exited
     unlock();
 	//wait until exit code has been collected to clean this thread up
@@ -305,7 +303,6 @@ void pthread_exit(void *value_ptr) {
  * called when SIGALRM goes off from timer 
  */
 void signal_handler(int signo) {
-	printf("SIGNAL\n");
 	/* if no other thread, just return */
 	if(thread_pool.size() <= 1) {
 		return;
@@ -334,7 +331,6 @@ void signal_handler(int signo) {
         } while (thread_pool.front()->status == BLOCKED || thread_pool.front()->status == EXITED);
 		//end change
 
-		printf("threadID: %d\n", thread_pool.front()->id);
 		/* resume scheduler and GOOOOOOOOOO */
 		longjmp(thread_pool.front()->jb,1);
 	}
