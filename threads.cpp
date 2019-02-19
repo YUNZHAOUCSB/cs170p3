@@ -520,8 +520,10 @@ int sem_post(sem_t *sem) {
     if (sem_struct->value == 1 && !(sem_struct->wait_q->empty())) {
 
 		//pop thread from front of wait q and set its status to ready
+		printf("made it here2\n");
 		tcb_t *temp = sem_struct->wait_q->front();
 		sem_struct->wait_q->pop();
+		printf("made it here2\n");
         temp->status = READY;
 
 		//clear the semaphores lock stream
