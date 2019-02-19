@@ -318,7 +318,6 @@ void signal_handler(int signo) {
 		/* switch threads */
 		// changed from original code
 		if (num_threads_exited == thread_pool.size()) {
-			printf("setting all threads to ready\n");
 			//all threads have exited, none are blocked
 			//set all their statuses to ready so they can be cleaned up
 			std::queue< tcb_t* > thread_pool_copy = thread_pool;
