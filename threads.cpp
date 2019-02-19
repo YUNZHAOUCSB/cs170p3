@@ -514,7 +514,7 @@ int sem_post(sem_t *sem) {
 
 	//increment value
 	sem_struct->value++;
-
+	printf("sem value: %d\n", sem_struct->value);
 	//if value was zero, then unblock item from queue
 	//also have to check if queue is not empty
     if (sem_struct->value == 1 && !(sem_struct->wait_q->empty())) {
