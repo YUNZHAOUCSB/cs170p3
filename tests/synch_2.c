@@ -33,8 +33,8 @@ int main()
 
     /* Note: you can check if thread has been successfully created by checking return value of
        pthread_create */
-    pthread_create (&thread_a, NULL, (void *) handler, (void *) &i[0]);
-    pthread_create (&thread_b, NULL, (void *) handler, (void *) &i[1]);
+    pthread_create (&thread_a, NULL, (void * (*)(void*)) handler, (void *) &i[0]);
+    pthread_create (&thread_b, NULL, (void * (*)(void*)) handler, (void *) &i[1]);
 
     pthread_join(thread_a, NULL);
     pthread_join(thread_b, NULL);
