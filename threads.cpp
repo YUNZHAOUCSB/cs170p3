@@ -115,7 +115,7 @@ static int has_initialized = 0;
 //added this to see if all threads have exited
 int num_threads_exited = 0;
 //this is for the locking mechanism
-bool lock = false;
+bool thread_lock = false;
 
 
 /*
@@ -409,13 +409,13 @@ int ptr_mangle(int p)
  */
 
 void lock() {
-    lock = true;
+    thread_lock = true;
     sigprocmask(SIG_BLOCK, &act.sa_mask, NULL);
 }
 
 void unlock() {
-    if (lock) {
-        lock = false;
+    if (thread_lock) {
+        thread_lock = false;
         sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
     }
 }
