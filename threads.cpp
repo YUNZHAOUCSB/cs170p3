@@ -473,7 +473,7 @@ int sem_destroy(sem_t *sem) {
         //free(sem_struct->init->wait_q);
 		free(sem_struct->wait_q);
         free(sem_struct);
-        free(sem);
+        //free(sem);
         return 1; // 1 is successful
     }
     else {
