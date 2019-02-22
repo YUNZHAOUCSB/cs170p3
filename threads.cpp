@@ -114,6 +114,8 @@ static int has_initialized = 0;
 
 //added this to see if all threads have exited
 int num_threads_exited = 0;
+//this is for the locking mechanism
+bool lock = false;
 
 
 /*
@@ -407,14 +409,18 @@ int ptr_mangle(int p)
  */
 
 void lock() {
+    lock = true;
     sigprocmask(SIG_BLOCK, &act.sa_mask, NULL);
 }
 
 void unlock() {
-    sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
+    if (lock) {
+        lock = false;
+        sigprocmask(SIG_UNBLOCK, &act.sa_mask, NULL);
+    }
 }
 
-void pthread_exit_wrapper (){
+void pthread_exit_wrapper() {
     unsigned  int res;
     asm("movl %%eax ,  %0\n":"=r "(res));
     pthread_exit((void *)  res) ;
