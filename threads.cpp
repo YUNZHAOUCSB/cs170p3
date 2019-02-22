@@ -457,7 +457,11 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 int sem_init(sem_t *sem, int pshared, unsigned value) {
     semaphore *temp;
 	temp = (semaphore*)malloc(sizeof(semaphore));
-    temp->value = value;
+	if (value < SEM_VALUE_MAX)
+    	temp->value = value;
+	else {
+		temp->value = SEM_VALUE_MAX;
+	}
     temp->init = true;
     temp->wait_q = new std::queue<tcb_t*>;
     sem->__align = (long int)temp;
@@ -469,7 +473,7 @@ int sem_destroy(sem_t *sem) {
         //free(sem_struct->init->wait_q);
 		free(sem_struct->wait_q);
         free(sem_struct);
-        //free(sem);
+        free(sem);
         return 1; // 1 is successful
     }
     else {
